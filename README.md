@@ -1,2 +1,2 @@
-# band-vaulr-editor
+# band-vault-editor
 streamlitによる*bandのVaultエディタ
