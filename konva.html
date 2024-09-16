@@ -1,89 +1,154 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vault Editor</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
-    canvas {
-      display: block;
-    }
-    #editor {
-        display:flex;
-    }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.9/konva.min.js"></script>
-</head>
-<body>
-    <div id="editor"></div>
-    <div id="container"></div>
-
-  <script>
-    let mouseDown = false
-    document.body.onmousedown = function() {
-        mouseDown = true;
-    }
-
-    document.body.onmouseup = function() {
-        mouseDown = false;
-    }
-    // グリッドサイズとマップサイズ
-    const gridSize = 32; // タイルサイズ
-    const mapWidth = 10; // 横タイル数
-    const mapHeight = 10; // 縦タイル数
-
-    const MapMaxSize = 300;
-    let grid = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(0));
-    let currentTerrain = 1;
-
-    // ステージを作成
-    const stage = new Konva.Stage({
-      container: 'container',
-      width: gridSize * mapWidth,
-      height: gridSize * mapHeight
-    });
-
-    // レイヤーを作成
-    const layer = new Konva.Layer();
-    stage.add(layer);
-
-    // グリッドを描画する関数
-    function drawGrid() {
-      for (let i = 0; i < mapWidth; i++) {
-        for (let j = 0; j < mapHeight; j++) {
-          const rect = new Konva.Rect({
-            x: i * gridSize,
-            y: j * gridSize,
-            width: gridSize,
-            height: gridSize,
-            fill: grid[i][j] === 0 ? "white" : "green",
-            stroke: 'black',
-            strokeWidth: 1
-          });
-
-          // クリックでタイルの色を変更する
-          rect.on('mousemove', function() {
-            if(mouseDown){
-                grid[i][j] = currentTerrain;
-                this.fill(grid[i][j] === 1 ? 'green' : 'white');
-                layer.draw(); // レイヤーを再描画
-            }
-          });
-
-          layer.add(rect);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault Editor</title>
+    <style>
+        body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: row;
         }
-      }
-    }
 
-    // 初期化時にグリッドを描画
-    drawGrid();
+        canvas {
+            display: block;
+        }
 
-    // レイヤーをステージに追加
-    layer.draw();
-  </script>
+        #editor {
+            display: flex;
+            width: 14rem;
+            background-color: #502110;
+            flex-direction: column;
+        }
+
+        #mappings {
+            display: flex;
+            flex-direction: column;
+            flex: 1 0 auto;
+        }
+
+        #tiles {
+            background-color: #151010;
+            flex: 1 1 auto;
+        }
+
+        #texts {
+            background-color: #202020;
+            flex: 1 1 auto;
+            overflow: auto;
+        }
+
+        #texts pre {
+            color: white;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.9/konva.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div id="editor">
+        <input type="range" name="vault-width" min="3" max="300">
+        <input type="range" name="vault-height" min="3" max="300">
+    </div>
+    <div id="mappings">
+    <div id="tiles"></div>
+    <div id="texts"><pre id="v_info"></pre></div>
+    </div>
+
+    <script>
+        function update_texts() {
+            let texts = document.getElementById('v_info');
+            texts.innerHTML = '<pre>';
+            for (let j = 0; j < mapWidth; j++) {
+                texts.innerHTML += 'D:';
+                for (let i = 0; i < mapHeight; i++) {
+                    texts.innerHTML += grid[i][j] == 1 ? '#' : '.';
+                }
+                texts.innerHTML += '\r\n';
+            }
+            texts.innerHTML += '</pre>';
+            console.log(texts.innerHTML);
+        }
+
+        let mouseDown = false
+        document.body.onmousedown = function () {
+            mouseDown = true;
+        }
+
+        document.body.onmouseup = function () {
+            mouseDown = false;
+        }
+        // グリッドサイズとマップサイズ
+        const gridSize = 24; // タイルサイズ
+        const mapWidth = 10; // 横タイル数
+        const mapHeight = 10; // 縦タイル数
+
+        const MapMaxSize = 300;
+        let grid = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(0));
+        let currentTerrain = 1;
+
+        // ステージを作成
+        const stage = new Konva.Stage({
+            container: 'tiles',
+            width: gridSize * mapWidth,
+            height: gridSize * mapHeight
+        });
+
+        // レイヤーを作成
+        const layer = new Konva.Layer();
+        stage.add(layer);
+
+        // グリッドを描画する関数
+        function drawGrid() {
+            for (let i = 0; i < mapWidth; i++) {
+                for (let j = 0; j < mapHeight; j++) {
+                    const rect = new Konva.Rect({
+                        x: i * gridSize,
+                        y: j * gridSize,
+                        width: gridSize,
+                        height: gridSize,
+                        fill: grid[i][j] === 0 ? "black" : "green",
+                        stroke: 'white',
+                        strokeWidth: 1
+                    });
+
+                    // クリックでタイルの色を変更する
+                    rect.on('mousemove', function () {
+                        if (mouseDown) {
+                            grid[i][j] = currentTerrain;
+                            this.fill(grid[i][j] === 1 ? 'green' : 'white');
+                            layer.draw(); // レイヤーを再描画
+                            update_texts();
+                        }
+                    });
+
+                    layer.add(rect);
+                }
+            }
+        }
+
+        // 初期化時にグリッドを描画
+        drawGrid();
+
+        // レイヤーをステージに追加
+        layer.draw();
+
+        window.onload = function() {
+            update_texts();
+        };
+    </script>
 </body>
+
 </html>
