@@ -1,2 +1,2 @@
 # band-vault-editor
-streamlitによる*bandのVaultエディタ
+*bandのVaultエディタ。まだ開発の走りの状態。
