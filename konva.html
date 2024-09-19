@@ -61,6 +61,39 @@
     <div id="editor">
         <input type="range" name="vault-width" min="3" max="300">
         <input type="range" name="vault-height" min="3" max="300">
+        <select id="grid_type">
+            <option value=".">. - Floor</option>
+            <option value=" ">SPACE - None</option>
+            <option value="%">% - outside of the vault, where corridors may be connected</option>
+            <option value="#"># - granite</option>
+            <option value="$">$ - glass wall</option>
+            <option value="X">X - impenetrable rock</option>
+            <option value="Y">Y - impenetrable glass wall</option>
+            <option value="*">* - treasure or trap</option>
+            <option value="+">+ - secret door</option>
+            <option value="-">- - secret glass door</option>
+            <option value="'">' - curtain</option>
+            <option value="^">^ - trap</option>
+            <option value="&">& - monster up to 5 levels out of depth (OOD)</option>
+            <option value="@">@ - monster up to 11 levels OOD</option>
+            <option value="9">9 - monster up to 9 levels OOD and treasure up to 7 levels OOD</option>
+            <option value="8">8 - monster up to 40 levels OOD and treasure up to 20 levels OOD</option>
+            <option value=",">, - monster up to 3 levels OOD and/or treasure up to 7 levels OOD</option>
+            <option value=":">: - tree</option>
+            <option value="[">[ - treasure</option>
+            <option value="~">~ - shallow water</option>
+            <option value="=">= - deep water</option>
+            <option value="v">v - shallow lava</option>
+            <option value="w">w - deep lava</option>
+            <option value="f">f - shallow acid puddle</option>
+            <option value="F">F - deep acid puddle</option>
+            <option value="g">g - shallow poisonous puddle</option>
+            <option value="G">G - deep poisonous puddle</option>
+            <option value="h">h - cold zone</option>
+            <option value="H">H - heavy cold zone</option>
+            <option value="i">i - electrical zone</option>
+            <option value="I">I - heavy electrical zone</option>
+          </select>
     </div>
     <div id="mappings">
     <div id="tiles"></div>
@@ -74,7 +107,7 @@
             for (let j = 0; j < mapWidth; j++) {
                 texts.innerHTML += 'D:';
                 for (let i = 0; i < mapHeight; i++) {
-                    texts.innerHTML += grid[i][j] == 1 ? '#' : '.';
+                    texts.innerHTML += grid[i][j];
                 }
                 texts.innerHTML += '\r\n';
             }
@@ -83,6 +116,8 @@
         }
 
         let mouseDown = false
+        let currentTerrain = ".";
+
         document.body.onmousedown = function () {
             mouseDown = true;
         }
@@ -90,14 +125,18 @@
         document.body.onmouseup = function () {
             mouseDown = false;
         }
+
+        document.getElementById('grid_type').onchange = function () {
+            currentTerrain = this.value;
+        }
+
         // グリッドサイズとマップサイズ
         const gridSize = 24; // タイルサイズ
         const mapWidth = 10; // 横タイル数
         const mapHeight = 10; // 縦タイル数
 
         const MapMaxSize = 300;
-        let grid = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(0));
-        let currentTerrain = 1;
+        let grid = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(" "));
 
         // ステージを作成
         const stage = new Konva.Stage({
@@ -119,16 +158,25 @@
                         y: j * gridSize,
                         width: gridSize,
                         height: gridSize,
-                        fill: grid[i][j] === 0 ? "black" : "green",
+                        fill: grid[i][j] === " " ? "black" : "gray",
                         stroke: 'white',
                         strokeWidth: 1
+                    });
+
+                    var text = new Konva.Text({
+                        x: i * gridSize,
+                        y: j * gridSize,
+                        text: grid[i][j],
+                        fontSize: 24,
+                        fontFamily: 'Arial',
+                        fill: 'white'
                     });
 
                     // クリックでタイルの色を変更する
                     rect.on('mousemove', function () {
                         if (mouseDown) {
                             grid[i][j] = currentTerrain;
-                            this.fill(grid[i][j] === 1 ? 'green' : 'white');
+                            this.fill(grid[i][j] === " " ? 'black' : 'gray');
                             layer.draw(); // レイヤーを再描画
                             update_texts();
                         }
