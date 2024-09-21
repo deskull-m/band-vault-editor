@@ -48,6 +48,13 @@
             font-family: monospace;
             font-size: 0.8rem;
         }
+
+        span.param {
+            color: white;
+            font-size: 0.8rem;
+            width: 4rem;
+            display: inline-block;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.9/konva.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -59,8 +66,10 @@
 
 <body>
     <div id="editor">
-        <input type="range" name="vault-width" min="3" max="300">
-        <input type="range" name="vault-height" min="3" max="300">
+        <div><span class="param">幅:</span><input type="number" id="vault-width" name="vault-width" min="3" max="240"
+                value="14"></div>
+        <div><span class="param">高さ:</span><input type="number" id="vault-height" name="vault-height" min="3" max="240"
+                value="14"></div>
         <select id="grid_type">
             <option value=".">. - Floor</option>
             <option value=" ">SPACE - None</option>
@@ -93,26 +102,27 @@
             <option value="H">H - heavy cold zone</option>
             <option value="i">i - electrical zone</option>
             <option value="I">I - heavy electrical zone</option>
-          </select>
+        </select>
     </div>
     <div id="mappings">
-    <div id="tiles"></div>
-    <div id="texts"><pre id="v_info"></pre></div>
+        <div id="tiles"></div>
+        <div id="texts">
+            <pre id="v_info"></pre>
+        </div>
     </div>
 
     <script>
         function update_texts() {
             let texts = document.getElementById('v_info');
             texts.innerHTML = '<pre>';
-            for (let j = 0; j < mapWidth; j++) {
+            for (let j = 0; j < mapHeight; j++) {
                 texts.innerHTML += 'D:';
-                for (let i = 0; i < mapHeight; i++) {
+                for (let i = 0; i < mapWidth; i++) {
                     texts.innerHTML += grid[i][j];
                 }
                 texts.innerHTML += '\r\n';
             }
             texts.innerHTML += '</pre>';
-            console.log(texts.innerHTML);
         }
 
         let mouseDown = false
@@ -132,25 +142,37 @@
 
         // グリッドサイズとマップサイズ
         const gridSize = 24; // タイルサイズ
-        const mapWidth = 10; // 横タイル数
-        const mapHeight = 10; // 縦タイル数
+        let mapWidth = document.getElementById('vault-width').value; // 横タイル数
+        let mapHeight = document.getElementById('vault-height').value; // 縦タイル数
+
+        document.getElementById('vault-width').onchange = function () {
+            mapWidth = document.getElementById('vault-width').value; // 横タイル数
+            drawGrid();
+            update_texts();
+        }
+
+        document.getElementById('vault-height').onchange = function () {
+            mapHeight = document.getElementById('vault-height').value; // 縦タイル数
+            drawGrid();
+            update_texts();
+        }
 
         const MapMaxSize = 300;
         let grid = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(" "));
-
-        // ステージを作成
-        const stage = new Konva.Stage({
-            container: 'tiles',
-            width: gridSize * mapWidth,
-            height: gridSize * mapHeight
-        });
-
-        // レイヤーを作成
-        const layer = new Konva.Layer();
-        stage.add(layer);
+        let konva_text = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
 
         // グリッドを描画する関数
         function drawGrid() {
+            const stage = new Konva.Stage({
+                container: 'tiles',
+                width: gridSize * mapWidth,
+                height: gridSize * mapHeight
+            });
+
+
+            const layer = new Konva.Layer();
+            konva_text = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
+            stage.add(layer);
             for (let i = 0; i < mapWidth; i++) {
                 for (let j = 0; j < mapHeight; j++) {
                     const rect = new Konva.Rect({
@@ -163,7 +185,7 @@
                         strokeWidth: 1
                     });
 
-                    var text = new Konva.Text({
+                    konva_text[i][j] = new Konva.Text({
                         x: i * gridSize,
                         y: j * gridSize,
                         text: grid[i][j],
@@ -177,6 +199,7 @@
                         if (mouseDown) {
                             grid[i][j] = currentTerrain;
                             this.fill(grid[i][j] === " " ? 'black' : 'gray');
+                            konva_text[i][j].text(grid[i][j]);
                             layer.draw(); // レイヤーを再描画
                             update_texts();
                         }
@@ -185,15 +208,11 @@
                     layer.add(rect);
                 }
             }
+            layer.draw();
         }
 
-        // 初期化時にグリッドを描画
-        drawGrid();
-
-        // レイヤーをステージに追加
-        layer.draw();
-
-        window.onload = function() {
+        window.onload = function () {
+            drawGrid();
             update_texts();
         };
     </script>
