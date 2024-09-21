@@ -55,6 +55,10 @@
             width: 4rem;
             display: inline-block;
         }
+
+        input.int {
+            width: 10rem;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.9/konva.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -66,10 +70,13 @@
 
 <body>
     <div id="editor">
-        <div><span class="param">幅:</span><input type="number" id="vault-width" name="vault-width" min="3" max="240"
+        <div><span class="param">部屋ID:</span><input type="number" class="int" id="vault-id" name="vault-id" min="0" value="0"></div>
+        <div><span class="param">種別ID:</span><input type="number" class="int" id="vault-type" name="vault-type" min="0" value="18"></div>
+        <div><span class="param">幅:</span><input type="number" class="int" id="vault-width" name="vault-width" min="3" max="240"
                 value="14"></div>
-        <div><span class="param">高さ:</span><input type="number" id="vault-height" name="vault-height" min="3" max="240"
+        <div><span class="param">高さ:</span><input type="number" class="int" id="vault-height" name="vault-height" min="3" max="240"
                 value="14"></div>
+        <div><span class="param">名前:</span><input type="text" class="int" id="vault-name" name="vault-name" value=""></div>
         <select id="grid_type">
             <option value=".">. - Floor</option>
             <option value=" ">SPACE - None</option>
@@ -115,8 +122,8 @@
         function update_texts() {
             let texts = document.getElementById('v_info');
             texts.innerHTML = '<pre>';
-            texts.innerHTML += `N:{}:{}\r\n`;
-            texts.innerHTML += `X:17:8:${mapHeight}:${mapWidth}\r\n`;
+            texts.innerHTML += `N:${mapID}:${mapName}\r\n`;
+            texts.innerHTML += `X:${mapType}:8:${mapHeight}:${mapWidth}\r\n`;
             for (let j = 0; j < mapHeight; j++) {
                 texts.innerHTML += 'D:';
                 for (let i = 0; i < mapWidth; i++) {
@@ -144,18 +151,36 @@
 
         // グリッドサイズとマップサイズ
         const gridSize = 24; // タイルサイズ
-        let mapWidth = document.getElementById('vault-width').value; // 横タイル数
-        let mapHeight = document.getElementById('vault-height').value; // 縦タイル数
+        let mapWidth = document.getElementById('vault-width').value;
+        let mapHeight = document.getElementById('vault-height').value;
+        let mapName = document.getElementById('vault-name').value;
+        let mapID = document.getElementById('vault-id').value;
+        let mapType = document.getElementById('vault-type').value;
 
         document.getElementById('vault-width').onchange = function () {
-            mapWidth = document.getElementById('vault-width').value; // 横タイル数
+            mapWidth = document.getElementById('vault-width').value;
             drawGrid();
             update_texts();
         }
 
         document.getElementById('vault-height').onchange = function () {
-            mapHeight = document.getElementById('vault-height').value; // 縦タイル数
+            mapHeight = document.getElementById('vault-height').value;
             drawGrid();
+            update_texts();
+        }
+
+        document.getElementById('vault-id').onchange = function () {
+            mapID = document.getElementById('vault-id').value;
+            update_texts();
+        }
+
+        document.getElementById('vault-type').onchange = function () {
+            mapType = document.getElementById('vault-type').value;
+            update_texts();
+        }
+
+        document.getElementById('vault-name').onchange = function () {
+            mapName = document.getElementById('vault-name').value;
             update_texts();
         }
 
