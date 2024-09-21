@@ -115,6 +115,8 @@
         function update_texts() {
             let texts = document.getElementById('v_info');
             texts.innerHTML = '<pre>';
+            texts.innerHTML += `N:{}:{}\r\n`;
+            texts.innerHTML += `X:17:8:${mapHeight}:${mapWidth}\r\n`;
             for (let j = 0; j < mapHeight; j++) {
                 texts.innerHTML += 'D:';
                 for (let i = 0; i < mapWidth; i++) {
