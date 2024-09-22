@@ -207,32 +207,35 @@
                         y: j * gridSize,
                         width: gridSize,
                         height: gridSize,
-                        fill: grid[i][j] === " " ? "black" : "gray",
+                        fill: grid[i][j] === " " ? "black" : "#401000",
                         stroke: 'white',
                         strokeWidth: 1
                     });
 
                     konva_text[i][j] = new Konva.Text({
-                        x: i * gridSize,
-                        y: j * gridSize,
+                        x: i * gridSize + 1,
+                        y: j * gridSize + 1,
                         text: grid[i][j],
                         fontSize: 24,
                         fontFamily: 'Arial',
-                        fill: 'white'
+                        stroke: 'white'
                     });
 
-                    // クリックでタイルの色を変更する
-                    rect.on('mousemove', function () {
+                    gridUpdate = function () {
                         if (mouseDown) {
                             grid[i][j] = currentTerrain;
-                            this.fill(grid[i][j] === " " ? 'black' : 'gray');
+                            this.fill(grid[i][j] === " " ? 'black' : '#401000');
                             konva_text[i][j].text(grid[i][j]);
-                            layer.draw(); // レイヤーを再描画
+                            layer.draw();
                             update_texts();
                         }
-                    });
+                    };
+
+                    rect.on('mousemove', gridUpdate);
+                    konva_text[i][j].on('mousemove', gridUpdate);
 
                     layer.add(rect);
+                    layer.add(konva_text[i][j]);
                 }
             }
             layer.draw();
