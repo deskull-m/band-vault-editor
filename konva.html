@@ -119,6 +119,9 @@
     </div>
 
     <script>
+        var touchmode = 'ontouchend' in document;
+        console.log(touchmode);
+
         function update_texts() {
             let texts = document.getElementById('v_info');
             texts.innerHTML = '<pre>';
@@ -137,13 +140,23 @@
         let mouseDown = false
         let currentTerrain = ".";
 
-        document.body.onmousedown = function () {
-            mouseDown = true;
+        if (touchmode) {
+            document.body.ontouchstart = function () {
+                mouseDown = true;
+            }
+            document.body.ontouchend = function () {
+                mouseDown = false;
+            }
+        }
+        else {
+            document.body.onmousedown = function () {
+                mouseDown = true;
+            }
+            document.body.onmouseup = function () {
+                mouseDown = false;
+            }
         }
 
-        document.body.onmouseup = function () {
-            mouseDown = false;
-        }
 
         document.getElementById('grid_type').onchange = function () {
             currentTerrain = this.value;
@@ -231,8 +244,15 @@
                         }
                     };
 
-                    rect.on('mousemove', gridUpdate);
-                    konva_text[i][j].on('mousemove', gridUpdate);
+
+                    if(touchmode){
+                        rect.on('touchmove', gridUpdate);
+                        konva_text[i][j].on('touchmove', gridUpdate);
+                    }
+                    else {
+                        rect.on('mousemove', gridUpdate);
+                        konva_text[i][j].on('mousemove', gridUpdate);
+                    }
 
                     layer.add(rect);
                     layer.add(konva_text[i][j]);
