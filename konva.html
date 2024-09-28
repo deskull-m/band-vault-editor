@@ -5,61 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vault Editor</title>
-    <style>
-        body {
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: row;
-        }
-
-        canvas {
-            display: block;
-        }
-
-        #editor {
-            display: flex;
-            width: 14rem;
-            background-color: #502110;
-            flex-direction: column;
-        }
-
-        #mappings {
-            display: flex;
-            flex-direction: column;
-            flex: 1 0 auto;
-        }
-
-        #tiles {
-            background-color: #151010;
-            flex: 1 1 auto;
-        }
-
-        #texts {
-            background-color: #202020;
-            flex: 1 1 auto;
-            overflow: auto;
-        }
-
-        #texts pre {
-            color: white;
-            font-family: monospace;
-            font-size: 0.8rem;
-        }
-
-        span.param {
-            color: white;
-            font-size: 0.8rem;
-            width: 4rem;
-            display: inline-block;
-        }
-
-        input.int {
-            width: 10rem;
-        }
-    </style>
+    <link href="editor.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.9/konva.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">

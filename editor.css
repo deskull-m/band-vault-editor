@@ -1,0 +1,53 @@
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: row;
+}
+
+canvas {
+    display: block;
+}
+
+#editor {
+    display: flex;
+    width: 14rem;
+    background-color: #502110;
+    flex-direction: column;
+}
+
+#mappings {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+}
+
+#tiles {
+    background-color: #151010;
+    flex: 1 1 auto;
+}
+
+#texts {
+    background-color: #202020;
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+#texts pre {
+    color: white;
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+span.param {
+    color: white;
+    font-size: 0.8rem;
+    width: 4rem;
+    display: inline-block;
+}
+
+input.int {
+    width: 10rem;
+}
