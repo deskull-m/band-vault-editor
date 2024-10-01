@@ -19,16 +19,21 @@
 </head>
 
 <body>
+    <div id="toggle"></div>
     <div id="version"></div>
+
     <div id="editor">
         <h2></h2>
-        <div><span class="param">部屋ID:</span><input type="number" class="int" id="vault-id" name="vault-id" min="0" value="0"></div>
-        <div><span class="param">種別ID:</span><input type="number" class="int" id="vault-type" name="vault-type" min="0" value="18"></div>
-        <div><span class="param">幅:</span><input type="number" class="int" id="vault-width" name="vault-width" min="3" max="240"
-                value="14"></div>
-        <div><span class="param">高さ:</span><input type="number" class="int" id="vault-height" name="vault-height" min="3" max="240"
-                value="14"></div>
-        <div><span class="param">名前:</span><input type="text" class="int" id="vault-name" name="vault-name" value=""></div>
+        <div><span class="param">部屋ID:</span><input type="number" class="int" id="vault-id" name="vault-id" min="0"
+                value="0"></div>
+        <div><span class="param">種別ID:</span><input type="number" class="int" id="vault-type" name="vault-type" min="0"
+                value="18"></div>
+        <div><span class="param">幅:</span><input type="number" class="int" id="vault-width" name="vault-width" min="3"
+                max="240" value="14"></div>
+        <div><span class="param">高さ:</span><input type="number" class="int" id="vault-height" name="vault-height"
+                min="3" max="240" value="14"></div>
+        <div><span class="param">名前:</span><input type="text" class="int" id="vault-name" name="vault-name" value="">
+        </div>
         <select id="grid_type">
             <option value=".">. - Floor</option>
             <option value=" ">SPACE - None</option>
@@ -196,8 +201,7 @@
                         }
                     };
 
-
-                    if(touchmode){
+                    if (touchmode) {
                         rect.on('touchmove', gridUpdate);
                         konva_text[i][j].on('touchmove', gridUpdate);
                     }
@@ -212,28 +216,50 @@
             }
             layer.draw();
         }
-
         window.onload = function () {
             drawGrid();
             update_texts();
         };
+
     </script>
 </body>
 
 <script type="text/babel">
-    const VERSION = "0.0.0";
+    const VERSION = "0.0.1";
     function App() {
-      const name = "Jane Doe";
-      const age = 25;
-      return (
-        <div>
-          <pre>*band Vault Editor by Deskull. Ver.{VERSION}</pre>
-        </div>
-      );
+        return (
+            <div>
+                <pre>*band Vault Editor by Deskull. Ver.{VERSION}</pre>
+            </div>
+        );
     }
+
+    function ToggleButton() {
+        const [isOn, setIsOn] = React.useState(false);
+
+        const toggleButton = () => {
+            if (isOn) {
+                document.getElementById('editor').style.display = 'flex';
+            }
+            else {
+                document.getElementById('editor').style.display = 'none';
+            }
+            setIsOn(!isOn);
+        };
+
+        return (
+            <button onClick={toggleButton} type="button" id="toggle-button">
+                {isOn ? '>>' : '<<'}
+            </button>
+        );
+    }
+
+    // ReactDOMを使ってコンポーネントをレンダリング
+    ReactDOM.render(<ToggleButton />, document.getElementById('toggle'));
+
 
     // Rendering the App component to the DOM
     ReactDOM.createRoot(document.getElementById('version')).render(<App />);
-  </script>
+</script>
 
 </html>
