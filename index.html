@@ -190,7 +190,8 @@
                         text: grid[i][j],
                         fontSize: 24,
                         fontFamily: 'Arial',
-                        stroke: 'white'
+                        stroke: 'white',
+                        listening: false, 
                     });
 
                     gridUpdate = function () {
@@ -205,11 +206,9 @@
 
                     if (touchmode) {
                         rect.on('touchmove', gridUpdate);
-                        konva_text[i][j].on('touchmove', gridUpdate);
                     }
                     else {
                         rect.on('mousemove', gridUpdate);
-                        konva_text[i][j].on('mousemove', gridUpdate);
                     }
 
                     layer.add(rect);
