@@ -67,6 +67,8 @@
             <option value="i">i - electrical zone</option>
             <option value="I">I - heavy electrical zone</option>
         </select>
+        <div id="slide_keys">
+        </div>
     </div>
     <div id="mappings">
         <div id="tiles"></div>
@@ -235,6 +237,58 @@
         );
     }
 
+    function SlideUp() {
+        console.log('SlideUp');
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight - 1; j++) {
+                grid[i][j] = grid[i][j + 1];
+            }
+        }
+        drawGrid();
+        update_texts();
+    }
+
+    function SlideLeft() {
+        for (let i = 0; i < mapWidth - 1; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                grid[i][j] = grid[i + 1][j];
+            }
+        }
+        drawGrid();
+        update_texts();
+    }
+
+    function SlideRight() {
+        for (let i = mapWidth - 1; i > 0; i--) {
+            for (let j = 0; j < mapHeight; j++) {
+                grid[i][j] = grid[i - 1][j];
+            }
+        }
+        drawGrid();
+        update_texts();
+    }
+
+    function SlideDown() {
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = mapHeight - 1; j > 0; j--) {
+                grid[i][j] = grid[i][j - 1];
+            }
+        }
+        drawGrid();
+        update_texts();
+    }
+
+    function SlideKeys() {
+        return (
+            <div>
+                <button onClick={SlideUp}>↑</button>
+                <button onClick={SlideRight}>→</button>
+                <button onClick={SlideLeft}>←</button>
+                <button onClick={SlideDown}>↓</button>
+            </div>
+        );
+    }
+
     function ToggleButton() {
         const [isOn, setIsOn] = React.useState(false);
 
@@ -261,6 +315,7 @@
 
     // Rendering the App component to the DOM
     ReactDOM.createRoot(document.getElementById('version')).render(<App />);
+    ReactDOM.createRoot(document.getElementById('slide_keys')).render(<SlideKeys />);
 </script>
 
 </html>
