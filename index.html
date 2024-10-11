@@ -281,12 +281,76 @@
     function SlideKeys() {
         return (
             <div>
-                <button onClick={SlideUp}>↑</button>
-                <button onClick={SlideRight}>→</button>
-                <button onClick={SlideLeft}>←</button>
-                <button onClick={SlideDown}>↓</button>
+                <div>
+                    <button onClick={SlideUp}>↑</button>
+                    <button onClick={SlideRight}>→</button>
+                    <button onClick={SlideLeft}>←</button>
+                    <button onClick={SlideDown}>↓</button>
+                </div>
+                <div>
+                    <button onClick={RotateLeft}>⤴</button>
+                    <button onClick={RotateRight}>⤵</button>
+                </div>
+                <div>
+                    <button onClick={ReverseGridLeftRight}>↔</button>
+                    <button onClick={ReverseGridUpDown}>↕</button>
+                </div>
             </div>
         );
+    }
+
+    function RotateLeft() {
+        let newGrid = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[j][mapWidth - i - 1] = grid[i][j];
+            }
+        }
+        grid = newGrid;
+        let tmp = mapWidth;
+        mapWidth = mapHeight;
+        mapHeight = tmp;
+        drawGrid();
+        update_texts();
+    }
+
+    function RotateRight() {
+        let newGrid = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[mapHeight - j - 1][i] = grid[i][j];
+            }
+        }
+        grid = newGrid;
+        let tmp = mapWidth;
+        mapWidth = mapHeight;
+        mapHeight = tmp;
+        drawGrid();
+        update_texts();
+    }
+
+    function ReverseGridLeftRight() {
+        let newGrid = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[i][j] = grid[mapWidth - i - 1][j];
+            }
+        }
+        grid = newGrid;
+        drawGrid();
+        update_texts();
+    }
+
+    function ReverseGridUpDown() {
+        let newGrid = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[i][j] = grid[i][mapHeight - j - 1];
+            }
+        }
+        grid = newGrid;
+        drawGrid();
+        update_texts();
     }
 
     function ToggleButton() {
