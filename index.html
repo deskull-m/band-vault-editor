@@ -291,6 +291,10 @@
                     <button onClick={RotateLeft}>⤴</button>
                     <button onClick={RotateRight}>⤵</button>
                 </div>
+                <div>
+                    <button onClick={ReverseGridLeftRight}>↔</button>
+                    <button onClick={ReverseGridUpDown}>↕</button>
+                </div>
             </div>
         );
     }
@@ -321,6 +325,30 @@
         let tmp = mapWidth;
         mapWidth = mapHeight;
         mapHeight = tmp;
+        drawGrid();
+        update_texts();
+    }
+
+    function ReverseGridLeftRight() {
+        let newGrid = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[i][j] = grid[mapWidth - i - 1][j];
+            }
+        }
+        grid = newGrid;
+        drawGrid();
+        update_texts();
+    }
+
+    function ReverseGridUpDown() {
+        let newGrid = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[i][j] = grid[i][mapHeight - j - 1];
+            }
+        }
+        grid = newGrid;
         drawGrid();
         update_texts();
     }
