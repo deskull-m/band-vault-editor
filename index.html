@@ -281,12 +281,48 @@
     function SlideKeys() {
         return (
             <div>
-                <button onClick={SlideUp}>↑</button>
-                <button onClick={SlideRight}>→</button>
-                <button onClick={SlideLeft}>←</button>
-                <button onClick={SlideDown}>↓</button>
+                <div>
+                    <button onClick={SlideUp}>↑</button>
+                    <button onClick={SlideRight}>→</button>
+                    <button onClick={SlideLeft}>←</button>
+                    <button onClick={SlideDown}>↓</button>
+                </div>
+                <div>
+                    <button onClick={RotateLeft}>⤴</button>
+                    <button onClick={RotateRight}>⤵</button>
+                </div>
             </div>
         );
+    }
+
+    function RotateLeft() {
+        let newGrid = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[j][mapWidth - i - 1] = grid[i][j];
+            }
+        }
+        grid = newGrid;
+        let tmp = mapWidth;
+        mapWidth = mapHeight;
+        mapHeight = tmp;
+        drawGrid();
+        update_texts();
+    }
+
+    function RotateRight() {
+        let newGrid = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(" "));
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                newGrid[mapHeight - j - 1][i] = grid[i][j];
+            }
+        }
+        grid = newGrid;
+        let tmp = mapWidth;
+        mapWidth = mapHeight;
+        mapHeight = tmp;
+        drawGrid();
+        update_texts();
     }
 
     function ToggleButton() {
