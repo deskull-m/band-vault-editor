@@ -73,7 +73,21 @@
     <div id="mappings">
         <div id="tiles"></div>
         <div id="texts">
-            <pre id="v_info"></pre>
+
+            <button id="copy" onclick="copyToClipboard()">コピー</button>
+
+            <script>
+                function copyToClipboard() {
+                    var copyText = document.getElementById("v_info");
+        
+                    copyText.select();
+                    copyText.setSelectionRange(0, 99999);        
+                    document.execCommand("copy");
+                }
+            </script>
+        
+
+            <textarea id="v_info" rows="40" cols="40"></textarea>
         </div>
     </div>
 
@@ -85,8 +99,7 @@
 
         function update_texts() {
             let texts = document.getElementById('v_info');
-            texts.innerHTML = '<pre>';
-            texts.innerHTML += `N:${mapID}:${mapName}\r\n`;
+            texts.innerHTML = `N:${mapID}:${mapName}\r\n`;
             texts.innerHTML += `X:${mapType}:8:${mapHeight}:${mapWidth}\r\n`;
             for (let j = 0; j < mapHeight; j++) {
                 texts.innerHTML += 'D:';
@@ -95,7 +108,6 @@
                 }
                 texts.innerHTML += '\r\n';
             }
-            texts.innerHTML += '</pre>';
         }
 
         let mouseDown = false

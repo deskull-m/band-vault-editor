@@ -58,6 +58,7 @@ canvas {
     background-color: #202020;
     flex: 1 1 auto;
     overflow: auto;
+    position: relative;
 }
 
 #texts pre {
@@ -76,4 +77,16 @@ span.param {
 
 input.int {
     width: 8rem;
+}
+
+#v_info {
+    font-family: courier;
+    background-color: #202020;
+    color: white;
+}
+
+#copy {
+    position: absolute;
+    right: 0;
+    top: 0
 }
