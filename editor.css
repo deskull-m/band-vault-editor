@@ -77,3 +77,9 @@ span.param {
 input.int {
     width: 8rem;
 }
+
+#v_info {
+    font-family: courier;
+    background-color: #202020;
+    color: white;
+}
