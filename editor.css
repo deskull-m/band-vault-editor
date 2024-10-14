@@ -58,6 +58,7 @@ canvas {
     background-color: #202020;
     flex: 1 1 auto;
     overflow: auto;
+    position: relative;
 }
 
 #texts pre {
@@ -82,4 +83,10 @@ input.int {
     font-family: courier;
     background-color: #202020;
     color: white;
+}
+
+#copy {
+    position: absolute;
+    right: 0;
+    top: 0
 }
