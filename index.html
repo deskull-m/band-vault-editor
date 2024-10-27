@@ -307,8 +307,43 @@
                     <button onClick={ReverseGridLeftRight}>↔</button>
                     <button onClick={ReverseGridUpDown}>↕</button>
                 </div>
+                <div>
+                    <button onClick={CoatingOutsideVault}>%</button>
+                </div>
             </div>
         );
+    }
+
+    function CoatingOutsideVault() {
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < mapHeight; j++) {
+                if(grid[i][j] !== " ") {
+                    continue
+                }
+
+                if(i > 0 && grid[i-1][j] !== " " && grid[i-1][j] !== "%") {
+                    grid[i][j] = "%";
+                    continue;
+                }
+
+                if(j > 0 && grid[i][j-1] !== " " && grid[i][j-1] !== "%") {
+                    grid[i][j] = "%";
+                    continue;
+                }
+
+                if(j < mapHeight - 1  && grid[i][j + 1] !== " "  && grid[i][j + 1] !== "%") {
+                    grid[i][j] = "%";
+                    continue;
+                }
+
+                if(i < mapWidth - 1  && grid[i + 1][j] !== " "  && grid[i + 1][j] !== "%") {
+                    grid[i][j] = "%";
+                    continue;
+                }
+            }
+        }
+        drawGrid();
+        update_texts();
     }
 
     function RotateLeft() {
