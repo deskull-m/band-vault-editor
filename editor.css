@@ -52,12 +52,13 @@ canvas {
     background-color: #151010;
     flex: 1 1 auto;
     padding: 1rem 3rem;
+    overflow: scroll;
 }
 
 #texts {
     background-color: #202020;
     flex: 1 1 auto;
-    overflow: auto;
+    overflow: hidden;
     position: relative;
 }
 
@@ -83,10 +84,12 @@ input.int {
     font-family: courier;
     background-color: #202020;
     color: white;
+    width: 100%;
+    height: 100%;
 }
 
 #copy {
     position: absolute;
-    right: 0;
-    top: 0
+    right: 1.5rem;
+    top: 0.3rem;
 }
