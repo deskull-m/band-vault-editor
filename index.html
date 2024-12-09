@@ -310,6 +310,9 @@
                 <div>
                     <button onClick={CoatingOutsideVault}>%</button>
                 </div>
+                <div>
+                    <button onClick={MirrorGridLeftToRight}>&gt;&gt;</button>
+                </div>
             </div>
         );
     }
@@ -396,6 +399,16 @@
             }
         }
         grid = newGrid;
+        drawGrid();
+        update_texts();
+    }
+
+    function MirrorGridLeftToRight() {
+        for (let j = 0; j < mapHeight; j++) {
+            for (let i = 0; i < Math.floor(mapWidth / 2); i++) {
+                grid[mapWidth - 1 - i][j] = grid[i][j];
+            }
+        }
         drawGrid();
         update_texts();
     }
