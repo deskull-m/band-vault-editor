@@ -69,6 +69,13 @@
         </select>
         <div id="slide_keys">
         </div>
+        <div id="symbolDialog" style="display:none;">
+            <label for="symbolInput">新規地形追加:</label>
+            <input type="text" id="symbolInput" maxlength="1">
+            <button onclick="defineSymbol()">定義</button>
+            <button onclick="closeDialog()">キャンセル</button>
+        </div>
+        <button onclick="openDialog()">馬鹿馬鹿用独自地形定義</button>
     </div>
     <div id="mappings">
         <div id="tiles"></div>
@@ -79,17 +86,18 @@
             <script>
                 function copyToClipboard() {
                     var copyText = document.getElementById("v_info");
-        
+
                     copyText.select();
-                    copyText.setSelectionRange(0, 99999);        
+                    copyText.setSelectionRange(0, 99999);
                     document.execCommand("copy");
                 }
             </script>
-        
+
 
             <textarea id="v_info"></textarea>
         </div>
     </div>
+
 
     <script>
         const VOID_TILE_COLOR = '#202020';
@@ -205,7 +213,7 @@
                         fontSize: 24,
                         fontFamily: 'Arial',
                         stroke: 'white',
-                        listening: false, 
+                        listening: false,
                     });
 
                     gridUpdate = function () {
@@ -235,6 +243,31 @@
             drawGrid();
             update_texts();
         };
+
+        function openDialog() {
+            document.getElementById('symbolDialog').style.display = 'block';
+        }
+
+        function closeDialog() {
+            document.getElementById('symbolDialog').style.display = 'none';
+        }
+
+        function addSymbolToSelect(symbol) {
+            let selectBox = document.querySelector('select');
+            let option = document.createElement('option');
+            option.value = symbol;
+            option.text = `${symbol} - 新規地形`;
+            selectBox.add(option);
+        }
+
+        function defineSymbol() {
+            let newSymbol = document.getElementById('symbolInput').value;
+            if (newSymbol.length === 1) {
+                currentTerrain = newSymbol;
+                addSymbolToSelect(newSymbol);
+                closeDialog();
+            }
+        }
 
     </script>
 </body>
@@ -320,26 +353,26 @@
     function CoatingOutsideVault() {
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
-                if(grid[i][j] !== " ") {
+                if (grid[i][j] !== " ") {
                     continue
                 }
 
-                if(i > 0 && grid[i-1][j] !== " " && grid[i-1][j] !== "%") {
+                if (i > 0 && grid[i - 1][j] !== " " && grid[i - 1][j] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
 
-                if(j > 0 && grid[i][j-1] !== " " && grid[i][j-1] !== "%") {
+                if (j > 0 && grid[i][j - 1] !== " " && grid[i][j - 1] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
 
-                if(j < mapHeight - 1  && grid[i][j + 1] !== " "  && grid[i][j + 1] !== "%") {
+                if (j < mapHeight - 1 && grid[i][j + 1] !== " " && grid[i][j + 1] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
 
-                if(i < mapWidth - 1  && grid[i + 1][j] !== " "  && grid[i + 1][j] !== "%") {
+                if (i < mapWidth - 1 && grid[i + 1][j] !== " " && grid[i + 1][j] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
