@@ -86,13 +86,13 @@
             <script>
                 function copyToClipboard() {
                     var copyText = document.getElementById("v_info");
-        
+
                     copyText.select();
-                    copyText.setSelectionRange(0, 99999);        
+                    copyText.setSelectionRange(0, 99999);
                     document.execCommand("copy");
                 }
             </script>
-        
+
 
             <textarea id="v_info"></textarea>
         </div>
@@ -213,7 +213,7 @@
                         fontSize: 24,
                         fontFamily: 'Arial',
                         stroke: 'white',
-                        listening: false, 
+                        listening: false,
                     });
 
                     gridUpdate = function () {
@@ -353,26 +353,26 @@
     function CoatingOutsideVault() {
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
-                if(grid[i][j] !== " ") {
+                if (grid[i][j] !== " ") {
                     continue
                 }
 
-                if(i > 0 && grid[i-1][j] !== " " && grid[i-1][j] !== "%") {
+                if (i > 0 && grid[i - 1][j] !== " " && grid[i - 1][j] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
 
-                if(j > 0 && grid[i][j-1] !== " " && grid[i][j-1] !== "%") {
+                if (j > 0 && grid[i][j - 1] !== " " && grid[i][j - 1] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
 
-                if(j < mapHeight - 1  && grid[i][j + 1] !== " "  && grid[i][j + 1] !== "%") {
+                if (j < mapHeight - 1 && grid[i][j + 1] !== " " && grid[i][j + 1] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
 
-                if(i < mapWidth - 1  && grid[i + 1][j] !== " "  && grid[i + 1][j] !== "%") {
+                if (i < mapWidth - 1 && grid[i + 1][j] !== " " && grid[i + 1][j] !== "%") {
                     grid[i][j] = "%";
                     continue;
                 }
