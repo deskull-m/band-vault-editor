@@ -76,6 +76,10 @@
             <button onclick="closeDialog()">キャンセル</button>
         </div>
         <button onclick="openDialog()">馬鹿馬鹿用独自地形定義</button>
+        <div id="change_tile_size">
+            <label for="tile_size" style="color:white;">タイルサイズ:</label>
+            <input type="number" id="tile_size" value="24" min="1" max="100" step="1" onchange="updateTileSize()">
+        </div>
     </div>
     <div id="mappings">
         <div id="tiles"></div>
@@ -144,7 +148,17 @@
         }
 
         // グリッドサイズとマップサイズ
-        const gridSize = 24; // タイルサイズ
+        let gridSize = 24; // タイルサイズ
+
+        // タイルサイズの変更
+        function updateTileSize() {
+            const newSize = document.getElementById('tile_size').value;
+            if (newSize > 0) {
+                gridSize = newSize;
+                drawGrid();
+            }
+        }
+
         let mapWidth = document.getElementById('vault-width').value;
         let mapHeight = document.getElementById('vault-height').value;
         let mapName = document.getElementById('vault-name').value;
@@ -210,7 +224,7 @@
                         x: i * gridSize + 1,
                         y: j * gridSize + 1,
                         text: grid[i][j],
-                        fontSize: 24,
+                        fontSize: gridSize,
                         fontFamily: 'Arial',
                         stroke: 'white',
                         listening: false,
