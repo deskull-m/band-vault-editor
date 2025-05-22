@@ -283,6 +283,60 @@
             }
         }
 
+        function parseTextToGUI() {
+            const text = document.getElementById('v_info').value;
+            const lines = text.split(/\r?\n/);
+            let error = null;
+            try {
+                const nMatch = lines[0].match(/^N:(\d+):(.*)$/);
+                if (!nMatch) throw "N:ブロックの定義が不正です";
+                document.getElementById('vault-id').value = nMatch[1];
+                document.getElementById('vault-name').value = nMatch[2];
+
+                const xMatch = lines[1].match(/^X:(\d+):8:(\d+):(\d+)$/);
+                if (!xMatch) throw "X:ブロックの定義が不正です";
+                document.getElementById('vault-type').value = xMatch[1];
+                document.getElementById('vault-height').value = xMatch[2];
+                document.getElementById('vault-width').value = xMatch[3];
+
+                let gridData = [];
+                for (let j = 0; j < parseInt(xMatch[2]); j++) {
+                    const dLine = lines[2 + j];
+                    if (!dLine || !dLine.startsWith('D:')) throw `D:ブロック${j+3}行目が不正です`;
+                    const row = dLine.slice(2);
+                    if (row.length !== parseInt(xMatch[3])) throw `D:ブロック${j+3}行目の長さが幅と一致しません`;
+                    gridData.push(row.split(''));
+                }
+                for (let i = 0; i < gridData[0].length; i++) {
+                    for (let j = 0; j < gridData.length; j++) {
+                        grid[i][j] = gridData[j][i];
+                    }
+                }
+                mapID = nMatch[1];
+                mapName = nMatch[2];
+                mapType = xMatch[1];
+                mapHeight = parseInt(xMatch[2]);
+                mapWidth = parseInt(xMatch[3]);
+                drawGrid();
+            } catch (e) {
+                error = e;
+            }
+            showParseError(error);
+        }
+
+        function showParseError(msg) {
+            let errDiv = document.getElementById('parseError');
+            if (!errDiv) {
+                errDiv = document.createElement('div');
+                errDiv.id = 'parseError';
+                errDiv.style.color = 'red';
+                document.getElementById('texts').appendChild(errDiv);
+            }
+            errDiv.textContent = msg ? `構文エラー: ${msg}` : '';
+        }
+
+        document.getElementById('v_info').addEventListener('input', parseTextToGUI);
+
     </script>
 </body>
 
