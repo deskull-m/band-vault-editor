@@ -93,3 +93,14 @@ input.int {
     right: 1.5rem;
     top: 0.3rem;
 }
+
+#parse-error {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 20);
+    color: white;
+    margin: 2rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: solid 0.3rem #800000;
+    display: none;
+}

@@ -83,6 +83,7 @@
     </div>
     <div id="mappings">
         <div id="tiles"></div>
+        <div id="parse-error"></div>
         <div id="texts">
 
             <button id="copy" onclick="copyToClipboard()">コピー</button>
@@ -325,14 +326,15 @@
         }
 
         function showParseError(msg) {
-            let errDiv = document.getElementById('parseError');
+            let errDiv = document.getElementById('parse-error');
             if (!errDiv) {
                 errDiv = document.createElement('div');
-                errDiv.id = 'parseError';
+                errDiv.id = 'parse-error';
                 errDiv.style.color = 'red';
                 document.getElementById('texts').appendChild(errDiv);
             }
             errDiv.textContent = msg ? `構文エラー: ${msg}` : '';
+            errDiv.style.display = msg ? 'block' : 'none';
         }
 
         document.getElementById('v_info').addEventListener('input', parseTextToGUI);
