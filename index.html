@@ -108,18 +108,17 @@
         const VOID_TILE_COLOR = '#202020';
         const NORMAL_TILE_COLOR = '#000000';
         var touchmode = 'ontouchend' in document;
-        console.log(touchmode);
 
         function update_texts() {
             let texts = document.getElementById('v_info');
-            texts.innerHTML = `N:${mapID}:${mapName}\r\n`;
-            texts.innerHTML += `X:${mapType}:8:${mapHeight}:${mapWidth}\r\n`;
+            texts.value = `N:${mapID}:${mapName}\r\n`;
+            texts.value += `X:${mapType}:8:${mapHeight}:${mapWidth}\r\n`;
             for (let j = 0; j < mapHeight; j++) {
-                texts.innerHTML += 'D:';
+                texts.value += 'D:';
                 for (let i = 0; i < mapWidth; i++) {
-                    texts.innerHTML += grid[i][j];
+                    texts.value += grid[i][j];
                 }
-                texts.innerHTML += '\r\n';
+                texts.value += '\r\n';
             }
         }
 
@@ -205,7 +204,6 @@
                 height: gridSize * mapHeight
             });
 
-
             const layer = new Konva.Layer();
             konva_text = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
             stage.add(layer);
@@ -219,6 +217,12 @@
                         fill: grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR,
                         stroke: 'white',
                         strokeWidth: 1
+                    });
+
+                    rect.on('mousedown', function () {
+                        grid[i][j] = currentTerrain;
+                        update_texts();
+                        drawGrid();
                     });
 
                     konva_text[i][j] = new Konva.Text({
@@ -353,7 +357,6 @@
     }
 
     function SlideUp() {
-        console.log('SlideUp');
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight - 1; j++) {
                 grid[i][j] = grid[i][j + 1];
