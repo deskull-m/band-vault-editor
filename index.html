@@ -69,13 +69,41 @@
         </select>
         <div id="slide_keys">
         </div>
-        <div id="symbolDialog" style="display:none;">
-            <label for="symbolInput">新規地形追加:</label>
-            <input type="text" id="symbolInput" maxlength="1">
-            <button onclick="defineSymbol()">定義</button>
-            <button onclick="closeDialog()">キャンセル</button>
+        <!-- Bootstrap Modal for Symbol Dialog -->
+        <div class="modal fade" id="symbolModal" tabindex="-1" aria-labelledby="symbolModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="symbolModalLabel">新規地形定義</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="symbolInput" class="form-label">地形シンボル (1文字):</label>
+                            <input type="text" class="form-control" id="symbolInput" maxlength="1" style="width: 80px;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="actualTerrain" class="form-label">実際の地形:</label>
+                            <select class="form-select" id="actualTerrain">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="visualTerrain" class="form-label">見た目の地形:</label>
+                            <select class="form-select" id="visualTerrain">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="button" class="btn btn-primary" onclick="defineCustomTerrain()">定義</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button onclick="openDialog()">馬鹿馬鹿用独自地形定義</button>
+        <!-- 古いsymbolDialogは削除 -->
+        <button onclick="openDialog()" class="btn btn-warning">馬鹿馬鹿用独自地形定義</button>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
             <input type="number" id="tile_size" value="24" min="1" max="100" step="1" onchange="updateTileSize()">
@@ -281,11 +309,17 @@
                 return;
             }
             updateSymbolDialog();
-            document.getElementById('symbolDialog').style.display = 'block';
+            // Bootstrapモーダルを表示
+            const modal = new bootstrap.Modal(document.getElementById('symbolModal'));
+            modal.show();
         }
 
         function closeDialog() {
-            document.getElementById('symbolDialog').style.display = 'none';
+            // Bootstrapモーダルを非表示
+            const modal = bootstrap.Modal.getInstance(document.getElementById('symbolModal'));
+            if (modal) {
+                modal.hide();
+            }
         }
 
         function addSymbolToSelect(symbol) {
@@ -349,37 +383,15 @@
 
         // 新規地形定義ダイアログのHTML更新
         function updateSymbolDialog() {
-            const symbolDialog = document.getElementById('symbolDialog');
-            symbolDialog.innerHTML = `
-        <div style="background: white; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
-            <h3>新規地形定義</h3>
-            <div>
-                <label for="symbolInput">地形シンボル (1文字):</label>
-                <input type="text" id="symbolInput" maxlength="1" style="width: 50px;">
-            </div>
-            <div style="margin-top: 10px;">
-                <label for="actualTerrain">実際の地形:</label>
-                <select id="actualTerrain" style="width: 300px;">
-                    <option value="">選択してください</option>
-                </select>
-            </div>
-            <div style="margin-top: 10px;">
-                <label for="visualTerrain">見た目の地形:</label>
-                <select id="visualTerrain" style="width: 300px;">
-                    <option value="">選択してください</option>
-                </select>
-            </div>
-            <div style="margin-top: 15px;">
-                <button onclick="defineCustomTerrain()" style="margin-right: 10px;">定義</button>
-                <button onclick="closeDialog()">キャンセル</button>
-            </div>
-        </div>
-    `;
-
-            // セレクトボックスに地形データを追加
+            // セレクトボックスをクリア
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
+            
+            // 既存のオプションをクリア（最初のオプション以外）
+            actualSelect.innerHTML = '<option value="">選択してください</option>';
+            visualSelect.innerHTML = '<option value="">選択してください</option>';
 
+            // セレクトボックスに地形データを追加
             terrainDefinitions.forEach(terrain => {
                 const option1 = document.createElement('option');
                 option1.value = terrain.id;
@@ -424,6 +436,11 @@
 
             // セレクトボックスに追加
             addSymbolToSelect(symbol);
+
+            // フォームをクリア
+            document.getElementById('symbolInput').value = '';
+            document.getElementById('actualTerrain').value = '';
+            document.getElementById('visualTerrain').value = '';
 
             closeDialog();
             alert(`新規地形 "${symbol}" が定義されました`);
