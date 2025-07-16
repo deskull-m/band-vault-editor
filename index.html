@@ -443,7 +443,54 @@
             document.getElementById('visualTerrain').value = '';
 
             closeDialog();
-            alert(`新規地形 "${symbol}" が定義されました`);
+            
+            // Bootstrapトーストで成功メッセージを表示
+            showToast(`新規地形 "${symbol}" が定義されました`, 'success');
+        }
+
+        // Bootstrapトーストを表示する関数
+        function showToast(message, type = 'info') {
+            // トーストコンテナがなければ作成
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'toast-container position-fixed top-50 start-50 translate-middle';
+                toastContainer.style.zIndex = '9999';
+                document.body.appendChild(toastContainer);
+            }
+
+            // トーストHTMLを作成
+            const toastId = 'toast-' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <span class="badge bg-${type === 'success' ? 'success' : 'info'} me-2"></span>
+                        <strong class="me-auto">地形エディタ</strong>
+                        <small>今</small>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            // トーストを追加
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Bootstrapトーストを初期化して表示
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 3000
+            });
+            toast.show();
+
+            // トーストが非表示になったら要素を削除
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                toastElement.remove();
+            });
         }
 
         function parseTextToGUI() {
