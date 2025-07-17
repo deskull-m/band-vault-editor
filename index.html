@@ -434,8 +434,8 @@
             // 現在の地形として設定
             currentTerrain = symbol;
 
-            // セレクトボックスに追加
-            addSymbolToSelect(symbol);
+            // メインの地形選択セレクトボックスに追加
+            addSymbolToMainSelect(symbol);
 
             // フォームをクリア
             document.getElementById('symbolInput').value = '';
@@ -446,6 +446,25 @@
 
             // Bootstrapトーストで成功メッセージを表示
             showToast(`新規地形 "${symbol}" が定義されました`, 'success');
+        }
+
+        function addSymbolToMainSelect(symbol) {
+            const selectBox = document.getElementById('grid_type');
+            const option = document.createElement('option');
+            option.value = symbol;
+
+            // 実際の地形と見た目の地形の情報を表示
+            const actualTerrainInfo = terrainDefinitions.find(t => t.id == customTerrains[symbol].actual);
+            const visualTerrainInfo = terrainDefinitions.find(t => t.id == customTerrains[symbol].visual);
+
+            const actualName = actualTerrainInfo ? (actualTerrainInfo.japaneName || actualTerrainInfo.englishName || actualTerrainInfo.name) : 'Unknown';
+            const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
+
+            option.textContent = `${symbol} - カスタム地形 (実際: ${actualName}, 見た目: ${visualName})`;
+            selectBox.appendChild(option);
+
+            // 新しく追加した地形を選択状態にする
+            selectBox.value = symbol;
         }
 
         // Bootstrapトーストを表示する関数
