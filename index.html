@@ -386,7 +386,7 @@
             // セレクトボックスをクリア
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
-            
+
             // 既存のオプションをクリア（最初のオプション以外）
             actualSelect.innerHTML = '<option value="">選択してください</option>';
             visualSelect.innerHTML = '<option value="">選択してください</option>';
@@ -434,8 +434,8 @@
             // 現在の地形として設定
             currentTerrain = symbol;
 
-            // セレクトボックスに追加
-            addSymbolToSelect(symbol);
+            // メインの地形選択セレクトボックスに追加
+            addSymbolToMainSelect(symbol);
 
             // フォームをクリア
             document.getElementById('symbolInput').value = '';
@@ -443,9 +443,28 @@
             document.getElementById('visualTerrain').value = '';
 
             closeDialog();
-            
+
             // Bootstrapトーストで成功メッセージを表示
             showToast(`新規地形 "${symbol}" が定義されました`, 'success');
+        }
+
+        function addSymbolToMainSelect(symbol) {
+            const selectBox = document.getElementById('grid_type');
+            const option = document.createElement('option');
+            option.value = symbol;
+
+            // 実際の地形と見た目の地形の情報を表示
+            const actualTerrainInfo = terrainDefinitions.find(t => t.id == customTerrains[symbol].actual);
+            const visualTerrainInfo = terrainDefinitions.find(t => t.id == customTerrains[symbol].visual);
+
+            const actualName = actualTerrainInfo ? (actualTerrainInfo.japaneName || actualTerrainInfo.englishName || actualTerrainInfo.name) : 'Unknown';
+            const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
+
+            option.textContent = `${symbol} - カスタム地形 (実際: ${actualName}, 見た目: ${visualName})`;
+            selectBox.appendChild(option);
+
+            // 新しく追加した地形を選択状態にする
+            selectBox.value = symbol;
         }
 
         // Bootstrapトーストを表示する関数
@@ -463,7 +482,7 @@
             // トーストHTMLを作成
             const toastId = 'toast-' + Date.now();
             const toastHtml = `
-                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" style="opacity: 0; transition: opacity 0.3s ease-in-out;">
                     <div class="toast-header">
                         <span class="badge bg-${type === 'success' ? 'success' : 'info'} me-2"></span>
                         <strong class="me-auto">地形エディタ</strong>
@@ -479,18 +498,37 @@
             // トーストを追加
             toastContainer.insertAdjacentHTML('beforeend', toastHtml);
 
-            // Bootstrapトーストを初期化して表示
+            // Bootstrapトーストを初期化
             const toastElement = document.getElementById(toastId);
             const toast = new bootstrap.Toast(toastElement, {
                 autohide: true,
                 delay: 3000
             });
+
+            // フェードイン効果
+            setTimeout(() => {
+                toastElement.style.opacity = '1';
+            }, 100);
+
+            // トーストを表示
             toast.show();
+
+            // 2.5秒後にフェードアウト開始
+            setTimeout(() => {
+                toastElement.style.opacity = '0';
+            }, 2500);
 
             // トーストが非表示になったら要素を削除
             toastElement.addEventListener('hidden.bs.toast', function () {
                 toastElement.remove();
             });
+
+            // フェードアウト完了後に強制的に削除（念のため）
+            setTimeout(() => {
+                if (toastElement.parentNode) {
+                    toastElement.remove();
+                }
+            }, 3300);
         }
 
         function parseTextToGUI() {
