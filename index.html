@@ -386,7 +386,7 @@
             // セレクトボックスをクリア
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
-            
+
             // 既存のオプションをクリア（最初のオプション以外）
             actualSelect.innerHTML = '<option value="">選択してください</option>';
             visualSelect.innerHTML = '<option value="">選択してください</option>';
@@ -443,7 +443,7 @@
             document.getElementById('visualTerrain').value = '';
 
             closeDialog();
-            
+
             // Bootstrapトーストで成功メッセージを表示
             showToast(`新規地形 "${symbol}" が定義されました`, 'success');
         }
