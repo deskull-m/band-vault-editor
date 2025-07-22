@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.9/konva.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
@@ -663,27 +664,67 @@
 
     function SlideKeys() {
         return (
-            <div>
-                <div>
-                    <button onClick={SlideUp}>↑</button>
-                    <button onClick={SlideRight}>→</button>
-                    <button onClick={SlideLeft}>←</button>
-                    <button onClick={SlideDown}>↓</button>
+            <div className="container-fluid">
+                <div className="row mb-2">
+                    <div className="col-12 text-center">
+                        <div className="btn-group" role="group" aria-label="スライド操作">
+                            <button className="btn btn-outline-primary btn-sm" onClick={SlideUp} title="上にスライド">
+                                <i className="bi bi-arrow-up"></i>
+                            </button>
+                            <button className="btn btn-outline-primary btn-sm" onClick={SlideDown} title="下にスライド">
+                                <i className="bi bi-arrow-down"></i>
+                            </button>
+                            <button className="btn btn-outline-primary btn-sm" onClick={SlideLeft} title="左にスライド">
+                                <i className="bi bi-arrow-left"></i>
+                            </button>
+                            <button className="btn btn-outline-primary btn-sm" onClick={SlideRight} title="右にスライド">
+                                <i className="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <button onClick={RotateLeft}>⤴</button>
-                    <button onClick={RotateRight}>⤵</button>
+                <div className="row mb-2">
+                    <div className="col-12 text-center">
+                        <div className="btn-group" role="group" aria-label="回転操作">
+                            <button className="btn btn-outline-success btn-sm" onClick={RotateLeft} title="左回転">
+                                <i className="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                            <button className="btn btn-outline-success btn-sm" onClick={RotateRight} title="右回転">
+                                <i className="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <button onClick={ReverseGridLeftRight}>↔</button>
-                    <button onClick={ReverseGridUpDown}>↕</button>
+                <div className="row mb-2">
+                    <div className="col-12 text-center">
+                        <div className="btn-group" role="group" aria-label="反転操作">
+                            <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridLeftRight} title="左右反転">
+                                <i className="bi bi-arrow-left-right"></i>
+                            </button>
+                            <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridUpDown} title="上下反転">
+                                <i className="bi bi-arrow-up-down"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <button onClick={CoatingOutsideVault}>%</button>
+                <div className="row mb-2">
+                    <div className="col-12 text-center">
+                        <button className="btn btn-outline-info btn-sm" onClick={CoatingOutsideVault} title="外周に%を配置">
+                            <i className="bi bi-percent"></i>
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <button onClick={MirrorGridLeftToRight}>&gt;&gt;</button>
-                    <button onClick={MirrorGridDiagonal}>＼</button>
+                <div className="row mb-2">
+                    <div className="col-12 text-center">
+                        <div className="btn-group" role="group" aria-label="ミラー操作">
+                            <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridLeftToRight} title="左から右へミラー">
+                                <i className="bi bi-chevron-double-right"></i>
+                            </button>
+                            <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridDiagonal} title="対角線ミラー">
+                                <i className="bi bi-slash-lg"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
