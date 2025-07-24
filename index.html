@@ -404,6 +404,35 @@
                 option2.textContent = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
                 visualSelect.appendChild(option2);
             });
+
+            // イベントリスナーを追加（既存のリスナーをクリア）
+            actualSelect.removeEventListener('change', onActualTerrainChange);
+            visualSelect.removeEventListener('change', onVisualTerrainChange);
+            
+            actualSelect.addEventListener('change', onActualTerrainChange);
+            visualSelect.addEventListener('change', onVisualTerrainChange);
+        }
+
+        // 実際の地形セレクトボックスの変更イベント
+        function onActualTerrainChange() {
+            const actualSelect = document.getElementById('actualTerrain');
+            const visualSelect = document.getElementById('visualTerrain');
+            
+            // 見た目の地形が未選択の場合、同じ値に設定
+            if (actualSelect.value && !visualSelect.value) {
+                visualSelect.value = actualSelect.value;
+            }
+        }
+
+        // 見た目の地形セレクトボックスの変更イベント
+        function onVisualTerrainChange() {
+            const actualSelect = document.getElementById('actualTerrain');
+            const visualSelect = document.getElementById('visualTerrain');
+            
+            // 実際の地形が未選択の場合、同じ値に設定
+            if (visualSelect.value && !actualSelect.value) {
+                actualSelect.value = visualSelect.value;
+            }
         }
 
         function defineCustomTerrain() {
