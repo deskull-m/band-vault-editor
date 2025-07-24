@@ -408,8 +408,17 @@
                     const jsonText = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
                     const data = JSON.parse(jsonText);
                     
-                    monsterDefinitions = data.monsters || [];
+                    // データ構造を確認してmonsterDefinitionsを設定
+                    if (data.monsters) {
+                        monsterDefinitions = data.monsters;
+                    } else if (Array.isArray(data)) {
+                        monsterDefinitions = data;
+                    } else {
+                        monsterDefinitions = [];
+                    }
+                    
                     console.log('モンスター定義データを読み込みました:', monsterDefinitions.length, '件');
+                    console.log('サンプルモンスター:', monsterDefinitions[0]); // デバッグ用
                 })
                 .catch(error => {
                     console.error('モンスター定義データの読み込みに失敗しました:', error);
@@ -447,7 +456,30 @@
             monsterDefinitions.forEach(monster => {
                 const option = document.createElement('option');
                 option.value = monster.id;
-                option.textContent = `${monster.id}: ${monster.japaneName || monster.englishName || monster.name}`;
+                
+                // モンスター名を適切に取得
+                let displayName = '';
+                if (monster.id !== undefined) {
+                    displayName = `${monster.id}: `;
+                    
+                    // 日本語名と英語名を並列表示
+                    const jaName = monster.name?.ja || monster.japaneName || '';
+                    const enName = monster.name?.en || monster.englishName || monster.name || '';
+                    
+                    if (jaName && enName && jaName !== enName) {
+                        displayName += `${jaName} / ${enName}`;
+                    } else if (jaName) {
+                        displayName += jaName;
+                    } else if (enName) {
+                        displayName += enName;
+                    } else {
+                        displayName += 'Unknown Monster';
+                    }
+                } else {
+                    displayName = 'Invalid Monster Data';
+                }
+                
+                option.textContent = displayName;
                 monsterSelect.appendChild(option);
             });
 
@@ -544,7 +576,22 @@
             
             if (terrainData.monster) {
                 const monsterInfo = monsterDefinitions.find(m => m.id == terrainData.monster);
-                const monsterName = monsterInfo ? (monsterInfo.japaneName || monsterInfo.englishName || monsterInfo.name) : 'Unknown';
+                let monsterName = 'Unknown Monster';
+                
+                if (monsterInfo) {
+                    // モンスター名を適切に取得
+                    const jaName = monsterInfo.name?.ja || monsterInfo.japaneName || '';
+                    const enName = monsterInfo.name?.en || monsterInfo.englishName || monsterInfo.name || '';
+                    
+                    if (jaName && enName && jaName !== enName) {
+                        monsterName = `${jaName} / ${enName}`;
+                    } else if (jaName) {
+                        monsterName = jaName;
+                    } else if (enName) {
+                        monsterName = enName;
+                    }
+                }
+                
                 description += `, モンスター: ${monsterName}`;
             }
             
