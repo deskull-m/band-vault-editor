@@ -72,7 +72,7 @@
         </div>
         <!-- Bootstrap Modal for Symbol Dialog -->
         <div class="modal fade" id="symbolModal" tabindex="-1" aria-labelledby="symbolModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="symbolModalLabel">新規地形定義</h5>
@@ -93,6 +93,12 @@
                             <label for="visualTerrain" class="form-label">見た目の地形:</label>
                             <select class="form-select" id="visualTerrain">
                                 <option value="">選択してください</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="monsterSelect" class="form-label">配置モンスター (オプション):</label>
+                            <select class="form-select" id="monsterSelect">
+                                <option value="">なし</option>
                             </select>
                         </div>
                     </div>
@@ -140,6 +146,7 @@
 
         // 地形定義データ
         let terrainDefinitions = [];
+        let monsterDefinitions = []; // モンスター定義データ
         let customTerrains = {}; // カスタム地形の保存用
 
         function update_texts() {
@@ -150,7 +157,14 @@
             // カスタム地形定義を出力
             for (let symbol in customTerrains) {
                 const terrain = customTerrains[symbol];
-                texts.value += `F:${symbol}:${terrain.actual}:${terrain.visual}\r\n`;
+                let line = `F:${symbol}:${terrain.actual}:${terrain.visual}`;
+                
+                // モンスターが設定されている場合は:MONSTER_IDを追加
+                if (terrain.monster) {
+                    line += `:MONSTER_${terrain.monster}`;
+                }
+                
+                texts.value += line + '\r\n';
             }
 
             for (let j = 0; j < mapHeight; j++) {
@@ -376,33 +390,97 @@
                     }
 
                     console.log('地形定義データを読み込みました:', terrainDefinitions.length, '件');
+                    
+                    // モンスターデータも読み込み
+                    loadMonsterDefinitions();
                 })
                 .catch(error => {
                     console.error('地形定義データの読み込みに失敗しました:', error);
                 });
         }
 
+        // MonraceDefinitions.jsoncからモンスターデータを取得
+        function loadMonsterDefinitions() {
+            fetch('https://raw.githubusercontent.com/deskull-m/bakabakaband/refs/heads/master/lib/edit/MonraceDefinitions.jsonc')
+                .then(response => response.text())
+                .then(text => {
+                    // JSONCのコメントを除去
+                    const jsonText = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+                    const data = JSON.parse(jsonText);
+                    
+                    // データ構造を確認してmonsterDefinitionsを設定
+                    if (data.monsters) {
+                        monsterDefinitions = data.monsters;
+                    } else if (Array.isArray(data)) {
+                        monsterDefinitions = data;
+                    } else {
+                        monsterDefinitions = [];
+                    }
+                    
+                    console.log('モンスター定義データを読み込みました:', monsterDefinitions.length, '件');
+                    console.log('サンプルモンスター:', monsterDefinitions[0]); // デバッグ用
+                })
+                .catch(error => {
+                    console.error('モンスター定義データの読み込みに失敗しました:', error);
+                    // エラーでも地形定義は使用可能にする
+                    monsterDefinitions = [];
+                });
+        }
+
         // 新規地形定義ダイアログのHTML更新
         function updateSymbolDialog() {
-            // セレクトボックスをクリア
+            // 地形セレクトボックスをクリア
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
 
-            // 既存のオプションをクリア（最初のオプション以外）
+            // 既存のオプションをクリア
             actualSelect.innerHTML = '<option value="">選択してください</option>';
             visualSelect.innerHTML = '<option value="">選択してください</option>';
 
             // セレクトボックスに地形データを追加
             terrainDefinitions.forEach(terrain => {
-                const option1 = document.createElement('option');
-                option1.value = terrain.id;
-                option1.textContent = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
-                actualSelect.appendChild(option1);
+                const displayName = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
+                
+                [actualSelect, visualSelect].forEach(select => {
+                    const option = document.createElement('option');
+                    option.value = terrain.id;
+                    option.textContent = displayName;
+                    select.appendChild(option);
+                });
+            });
 
-                const option2 = document.createElement('option');
-                option2.value = terrain.id;
-                option2.textContent = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
-                visualSelect.appendChild(option2);
+            // モンスターセレクトボックスを更新
+            const monsterSelect = document.getElementById('monsterSelect');
+            monsterSelect.innerHTML = '<option value="">なし</option>';
+            
+            monsterDefinitions.forEach(monster => {
+                const option = document.createElement('option');
+                option.value = monster.id;
+                
+                // モンスター名を適切に取得
+                let displayName = '';
+                if (monster.id !== undefined) {
+                    displayName = `${monster.id}: `;
+                    
+                    // 日本語名と英語名を並列表示
+                    const jaName = monster.name?.ja || monster.japaneName || '';
+                    const enName = monster.name?.en || monster.englishName || monster.name || '';
+                    
+                    if (jaName && enName && jaName !== enName) {
+                        displayName += `${jaName} / ${enName}`;
+                    } else if (jaName) {
+                        displayName += jaName;
+                    } else if (enName) {
+                        displayName += enName;
+                    } else {
+                        displayName += 'Unknown Monster';
+                    }
+                } else {
+                    displayName = 'Invalid Monster Data';
+                }
+                
+                option.textContent = displayName;
+                monsterSelect.appendChild(option);
             });
 
             // イベントリスナーを追加（既存のリスナーをクリア）
@@ -439,6 +517,7 @@
             const symbol = document.getElementById('symbolInput').value;
             const actualTerrain = document.getElementById('actualTerrain').value;
             const visualTerrain = document.getElementById('visualTerrain').value;
+            const monsterId = document.getElementById('monsterSelect').value;
 
             if (!symbol || symbol.length !== 1) {
                 alert('1文字のシンボルを入力してください');
@@ -458,7 +537,8 @@
             // カスタム地形を保存
             customTerrains[symbol] = {
                 actual: actualTerrain,
-                visual: visualTerrain
+                visual: visualTerrain,
+                monster: monsterId || null
             };
 
             // 現在の地形として設定
@@ -471,6 +551,7 @@
             document.getElementById('symbolInput').value = '';
             document.getElementById('actualTerrain').value = '';
             document.getElementById('visualTerrain').value = '';
+            document.getElementById('monsterSelect').value = '';
 
             closeDialog();
 
@@ -484,19 +565,44 @@
             option.value = symbol;
 
             // 実際の地形と見た目の地形の情報を表示
-            const actualTerrainInfo = terrainDefinitions.find(t => t.id == customTerrains[symbol].actual);
-            const visualTerrainInfo = terrainDefinitions.find(t => t.id == customTerrains[symbol].visual);
+            const terrainData = customTerrains[symbol];
+            const actualTerrainInfo = terrainDefinitions.find(t => t.id == terrainData.actual);
+            const visualTerrainInfo = terrainDefinitions.find(t => t.id == terrainData.visual);
 
             const actualName = actualTerrainInfo ? (actualTerrainInfo.japaneName || actualTerrainInfo.englishName || actualTerrainInfo.name) : 'Unknown';
             const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
 
-            option.textContent = `${symbol} - カスタム地形 (実際: ${actualName}, 見た目: ${visualName})`;
+            let description = `カスタム地形 (実際: ${actualName}, 見た目: ${visualName}`;
+            
+            if (terrainData.monster) {
+                const monsterInfo = monsterDefinitions.find(m => m.id == terrainData.monster);
+                let monsterName = 'Unknown Monster';
+                
+                if (monsterInfo) {
+                    // モンスター名を適切に取得
+                    const jaName = monsterInfo.name?.ja || monsterInfo.japaneName || '';
+                    const enName = monsterInfo.name?.en || monsterInfo.englishName || monsterInfo.name || '';
+                    
+                    if (jaName && enName && jaName !== enName) {
+                        monsterName = `${jaName} / ${enName}`;
+                    } else if (jaName) {
+                        monsterName = jaName;
+                    } else if (enName) {
+                        monsterName = enName;
+                    }
+                }
+                
+                description += `, モンスター: ${monsterName}`;
+            }
+            
+            description += ')';
+
+            option.textContent = `${symbol} - ${description}`;
             selectBox.appendChild(option);
 
             // 新しく追加した地形を選択状態にする
             selectBox.value = symbol;
         }
-
         // Bootstrapトーストを表示する関数
         function showToast(message, type = 'info') {
             // トーストコンテナがなければ作成
