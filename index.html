@@ -97,7 +97,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="monsterSelect" class="form-label">配置モンスター (オプション):</label>
-                            <select class="form-select" id="monsterSelect">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" id="monsterFilter" placeholder="モンスター名で検索..." onkeyup="filterMonsters()">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearMonsterFilter()">クリア</button>
+                            </div>
+                            <select class="form-select" id="monsterSelect" size="5">
                                 <option value="">なし</option>
                             </select>
                         </div>
@@ -450,10 +454,34 @@
             });
 
             // モンスターセレクトボックスを更新
+            populateMonsterSelect();
+
+            // イベントリスナーを追加（既存のリスナーをクリア）
+            actualSelect.removeEventListener('change', onActualTerrainChange);
+            visualSelect.removeEventListener('change', onVisualTerrainChange);
+
+            actualSelect.addEventListener('change', onActualTerrainChange);
+            visualSelect.addEventListener('change', onVisualTerrainChange);
+        }
+
+        // モンスターセレクトボックスを更新する関数
+        function populateMonsterSelect(filterText = '') {
             const monsterSelect = document.getElementById('monsterSelect');
             monsterSelect.innerHTML = '<option value="">なし</option>';
 
-            monsterDefinitions.forEach(monster => {
+            const filteredMonsters = monsterDefinitions.filter(monster => {
+                if (!filterText) return true;
+                
+                const jaName = monster.name?.ja || monster.japaneName || '';
+                const enName = monster.name?.en || monster.englishName || monster.name || '';
+                const searchText = filterText.toLowerCase();
+                
+                return jaName.toLowerCase().includes(searchText) || 
+                       enName.toLowerCase().includes(searchText) ||
+                       monster.id.toString().includes(searchText);
+            });
+
+            filteredMonsters.forEach(monster => {
                 const option = document.createElement('option');
                 option.value = monster.id;
 
@@ -462,7 +490,7 @@
                 if (monster.id !== undefined) {
                     displayName = `${monster.id}: `;
 
-                    if (monster.symbol.character && monster.symbol.character) {
+                    if (monster.symbol && monster.symbol.character) {
                         displayName += `${monster.symbol.character} `;
                     }
 
@@ -491,12 +519,25 @@
                 monsterSelect.appendChild(option);
             });
 
-            // イベントリスナーを追加（既存のリスナーをクリア）
-            actualSelect.removeEventListener('change', onActualTerrainChange);
-            visualSelect.removeEventListener('change', onVisualTerrainChange);
+            // 検索結果の件数を表示
+            const filterInput = document.getElementById('monsterFilter');
+            if (filterText && filterInput) {
+                filterInput.placeholder = `${filteredMonsters.length}件見つかりました`;
+            } else if (filterInput) {
+                filterInput.placeholder = 'モンスター名で検索...';
+            }
+        }
 
-            actualSelect.addEventListener('change', onActualTerrainChange);
-            visualSelect.addEventListener('change', onVisualTerrainChange);
+        // モンスターフィルター機能
+        function filterMonsters() {
+            const filterText = document.getElementById('monsterFilter').value;
+            populateMonsterSelect(filterText);
+        }
+
+        // モンスターフィルターをクリア
+        function clearMonsterFilter() {
+            document.getElementById('monsterFilter').value = '';
+            populateMonsterSelect();
         }
 
         // 実際の地形セレクトボックスの変更イベント
