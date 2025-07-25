@@ -158,12 +158,12 @@
             for (let symbol in customTerrains) {
                 const terrain = customTerrains[symbol];
                 let line = `F:${symbol}:${terrain.actual}:${terrain.visual}`;
-                
+
                 // モンスターが設定されている場合は:MONSTER_IDを追加
                 if (terrain.monster) {
                     line += `:MONSTER_${terrain.monster}`;
                 }
-                
+
                 texts.value += line + '\r\n';
             }
 
@@ -390,7 +390,7 @@
                     }
 
                     console.log('地形定義データを読み込みました:', terrainDefinitions.length, '件');
-                    
+
                     // モンスターデータも読み込み
                     loadMonsterDefinitions();
                 })
@@ -407,7 +407,7 @@
                     // JSONCのコメントを除去
                     const jsonText = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
                     const data = JSON.parse(jsonText);
-                    
+
                     // データ構造を確認してmonsterDefinitionsを設定
                     if (data.monsters) {
                         monsterDefinitions = data.monsters;
@@ -416,7 +416,7 @@
                     } else {
                         monsterDefinitions = [];
                     }
-                    
+
                     console.log('モンスター定義データを読み込みました:', monsterDefinitions.length, '件');
                     console.log('サンプルモンスター:', monsterDefinitions[0]); // デバッグ用
                 })
@@ -440,7 +440,7 @@
             // セレクトボックスに地形データを追加
             terrainDefinitions.forEach(terrain => {
                 const displayName = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
-                
+
                 [actualSelect, visualSelect].forEach(select => {
                     const option = document.createElement('option');
                     option.value = terrain.id;
@@ -452,33 +452,41 @@
             // モンスターセレクトボックスを更新
             const monsterSelect = document.getElementById('monsterSelect');
             monsterSelect.innerHTML = '<option value="">なし</option>';
-            
+
             monsterDefinitions.forEach(monster => {
                 const option = document.createElement('option');
                 option.value = monster.id;
-                
-                // モンスター名を適切に取得
+
+                // モンスター表示形式: ID: symbol Lv## 日本語名 / 英語名
                 let displayName = '';
                 if (monster.id !== undefined) {
                     displayName = `${monster.id}: `;
-                    
+
+                    if (monster.symbol.character && monster.symbol.character) {
+                        displayName += `${monster.symbol.character} `;
+                    }
+
+                    if (monster.level !== undefined) {
+                        displayName += `Lv${monster.level} `;
+                    }
+
                     // 日本語名と英語名を並列表示
                     const jaName = monster.name?.ja || monster.japaneName || '';
                     const enName = monster.name?.en || monster.englishName || monster.name || '';
-                    
+
                     if (jaName && enName && jaName !== enName) {
-                        displayName += `${jaName} / ${enName}`;
+                        displayName += `${jaName.substring(0, 30)} / ${enName.substring(0, 30)}`;
                     } else if (jaName) {
-                        displayName += jaName;
+                        displayName += jaName.substring(0, 30);
                     } else if (enName) {
-                        displayName += enName;
+                        displayName += enName.substring(0, 30);
                     } else {
                         displayName += 'Unknown Monster';
                     }
                 } else {
                     displayName = 'Invalid Monster Data';
                 }
-                
+
                 option.textContent = displayName;
                 monsterSelect.appendChild(option);
             });
@@ -486,7 +494,7 @@
             // イベントリスナーを追加（既存のリスナーをクリア）
             actualSelect.removeEventListener('change', onActualTerrainChange);
             visualSelect.removeEventListener('change', onVisualTerrainChange);
-            
+
             actualSelect.addEventListener('change', onActualTerrainChange);
             visualSelect.addEventListener('change', onVisualTerrainChange);
         }
@@ -495,7 +503,7 @@
         function onActualTerrainChange() {
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
-            
+
             // 見た目の地形が未選択の場合、同じ値に設定
             if (actualSelect.value && !visualSelect.value) {
                 visualSelect.value = actualSelect.value;
@@ -506,7 +514,7 @@
         function onVisualTerrainChange() {
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
-            
+
             // 実際の地形が未選択の場合、同じ値に設定
             if (visualSelect.value && !actualSelect.value) {
                 actualSelect.value = visualSelect.value;
@@ -573,16 +581,16 @@
             const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
 
             let description = `カスタム地形 (実際: ${actualName}, 見た目: ${visualName}`;
-            
+
             if (terrainData.monster) {
                 const monsterInfo = monsterDefinitions.find(m => m.id == terrainData.monster);
                 let monsterName = 'Unknown Monster';
-                
+
                 if (monsterInfo) {
                     // モンスター名を適切に取得
                     const jaName = monsterInfo.name?.ja || monsterInfo.japaneName || '';
                     const enName = monsterInfo.name?.en || monsterInfo.englishName || monsterInfo.name || '';
-                    
+
                     if (jaName && enName && jaName !== enName) {
                         monsterName = `${jaName} / ${enName}`;
                     } else if (jaName) {
@@ -591,10 +599,10 @@
                         monsterName = enName;
                     }
                 }
-                
+
                 description += `, モンスター: ${monsterName}`;
             }
-            
+
             description += ')';
 
             option.textContent = `${symbol} - ${description}`;
