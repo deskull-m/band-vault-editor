@@ -381,6 +381,10 @@
                                     name: match[2]
                                 };
                             }
+                            if (!currentTerrain.tags) {
+                                currentTerrain.tags = [];
+                            }
+                            currentTerrain.tags.push(currentTerrain.name);
                         } else if (line.startsWith('J:')) {
                             currentTerrain.japaneName = line.substring(2);
                         } else if (line.startsWith('E:')) {
@@ -443,7 +447,13 @@
 
             // セレクトボックスに地形データを追加
             terrainDefinitions.forEach(terrain => {
-                const displayName = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
+                const baseName = terrain.japaneName || terrain.englishName || terrain.name;
+                let displayName = `${terrain.id}: ${baseName}`;
+                // タグがある場合は追加
+                if (terrain.tags && terrain.tags.length > 0) {
+                    const tagsText = terrain.tags.join(', ');
+                    displayName += ` (${tagsText})`;
+                }
 
                 [actualSelect, visualSelect].forEach(select => {
                     const option = document.createElement('option');
@@ -621,7 +631,7 @@
             const actualName = actualTerrainInfo ? (actualTerrainInfo.japaneName || actualTerrainInfo.englishName || actualTerrainInfo.name) : 'Unknown';
             const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
 
-            let description = `カスタム地形 (実際: ${actualName}, 見た目: ${visualName}`;
+            let description = `${actualName}(${actualTerrainInfo.tags.join(', ')}) 見た目: ${visualName}(${visualTerrainInfo.tags.join(', ')})`;
 
             if (terrainData.monster) {
                 const monsterInfo = monsterDefinitions.find(m => m.id == terrainData.monster);
