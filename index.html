@@ -457,21 +457,29 @@
                 const option = document.createElement('option');
                 option.value = monster.id;
 
-                // モンスター名を適切に取得
+                // モンスター表示形式: ID: symbol Lv## 日本語名 / 英語名
                 let displayName = '';
                 if (monster.id !== undefined) {
                     displayName = `${monster.id}: `;
+
+                    if (monster.symbol.character && monster.symbol.character) {
+                        displayName += `${monster.symbol.character} `;
+                    }
+
+                    if (monster.level !== undefined) {
+                        displayName += `Lv${monster.level} `;
+                    }
 
                     // 日本語名と英語名を並列表示
                     const jaName = monster.name?.ja || monster.japaneName || '';
                     const enName = monster.name?.en || monster.englishName || monster.name || '';
 
                     if (jaName && enName && jaName !== enName) {
-                        displayName += `${jaName} / ${enName}`;
+                        displayName += `${jaName.substring(0, 30)} / ${enName.substring(0, 30)}`;
                     } else if (jaName) {
-                        displayName += jaName;
+                        displayName += jaName.substring(0, 30);
                     } else if (enName) {
-                        displayName += enName;
+                        displayName += enName.substring(0, 30);
                     } else {
                         displayName += 'Unknown Monster';
                     }
