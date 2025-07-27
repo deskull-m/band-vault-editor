@@ -432,6 +432,15 @@
                 return;
             }
 
+            // マップ上の削除対象地形をスペースに置き換え
+            for (let i = 0; i < mapWidth; i++) {
+                for (let j = 0; j < mapHeight; j++) {
+                    if (grid[i][j] === selectedSymbol) {
+                        grid[i][j] = ' ';
+                    }
+                }
+            }
+
             // カスタム地形から削除
             delete customTerrains[selectedSymbol];
 
@@ -451,6 +460,9 @@
                 gridTypeSelect.value = '.';
             }
 
+            // グリッドを再描画
+            drawGrid();
+
             // 削除ダイアログを更新
             updateDeleteDialog();
 
@@ -464,7 +476,7 @@
             }
 
             // 成功メッセージを表示
-            showToast(`地形 "${selectedSymbol}" が削除されました`, 'success');
+            showToast(`地形 "${selectedSymbol}" が削除されました。マップ上の該当地形はスペースに置き換えられました。`, 'success');
         }
 
         function closeDialog() {
