@@ -85,13 +85,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="actualTerrain" class="form-label">実際の地形:</label>
-                            <select class="form-select" id="actualTerrain">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" id="actualTerrainFilter" placeholder="地形名で検索..." onkeyup="filterActualTerrain()">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearActualTerrainFilter()">クリア</button>
+                            </div>
+                            <select class="form-select" id="actualTerrain" size="5">
                                 <option value="">選択してください</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="visualTerrain" class="form-label">見た目の地形:</label>
-                            <select class="form-select" id="visualTerrain">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" id="visualTerrainFilter" placeholder="地形名で検索..." onkeyup="filterVisualTerrain()">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearVisualTerrainFilter()">クリア</button>
+                            </div>
+                            <select class="form-select" id="visualTerrain" size="5">
                                 <option value="">選択してください</option>
                             </select>
                         </div>
@@ -113,8 +121,36 @@
                 </div>
             </div>
         </div>
+
+        <!-- Bootstrap Modal for Delete Dialog -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">カスタム地形削除</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="deleteTerrainSelect" class="form-label">削除する地形を選択:</label>
+                            <select class="form-select" id="deleteTerrainSelect" size="8">
+                            </select>
+                        </div>
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            選択した地形は完全に削除されます。この操作は取り消せません。
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteCustomTerrain()">削除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- 古いsymbolDialogは削除 -->
         <button onclick="openDialog()" class="btn btn-warning">馬鹿馬鹿用独自地形定義</button>
+        <button onclick="openDeleteDialog()" class="btn btn-danger">カスタム地形削除</button>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
             <input type="number" id="tile_size" value="24" min="1" max="100" step="1" onchange="updateTileSize()">
@@ -333,6 +369,116 @@
             modal.show();
         }
 
+        function openDeleteDialog() {
+            updateDeleteDialog();
+            // Bootstrapモーダルを表示
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        function updateDeleteDialog() {
+            const deleteSelect = document.getElementById('deleteTerrainSelect');
+            deleteSelect.innerHTML = '';
+
+            // カスタム地形がない場合のメッセージ
+            if (Object.keys(customTerrains).length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '削除可能なカスタム地形がありません';
+                option.disabled = true;
+                deleteSelect.appendChild(option);
+                return;
+            }
+
+            // カスタム地形のみを表示
+            for (let symbol in customTerrains) {
+                const terrain = customTerrains[symbol];
+                const actualTerrainInfo = terrainDefinitions.find(t => t.id == terrain.actual);
+                const visualTerrainInfo = terrainDefinitions.find(t => t.id == terrain.visual);
+
+                const actualName = actualTerrainInfo ? (actualTerrainInfo.japaneName || actualTerrainInfo.englishName || actualTerrainInfo.name) : 'Unknown';
+                const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
+
+                let description = `実際: ${actualName}, 見た目: ${visualName}`;
+
+                if (terrain.monster) {
+                    const monsterInfo = monsterDefinitions.find(m => m.id == terrain.monster);
+                    if (monsterInfo) {
+                        const jaName = monsterInfo.name?.ja || monsterInfo.japaneName || '';
+                        const enName = monsterInfo.name?.en || monsterInfo.englishName || monsterInfo.name || '';
+                        const monsterName = jaName || enName || 'Unknown Monster';
+                        description += `, モンスター: ${monsterName}`;
+                    }
+                }
+
+                const option = document.createElement('option');
+                option.value = symbol;
+                option.textContent = `${symbol} - ${description}`;
+                deleteSelect.appendChild(option);
+            }
+        }
+
+        function deleteCustomTerrain() {
+            const deleteSelect = document.getElementById('deleteTerrainSelect');
+            const selectedSymbol = deleteSelect.value;
+
+            if (!selectedSymbol) {
+                alert('削除する地形を選択してください');
+                return;
+            }
+
+            // 確認ダイアログ
+            if (!confirm(`地形 "${selectedSymbol}" を削除しますか？この操作は取り消せません。`)) {
+                return;
+            }
+
+            // マップ上の削除対象地形をスペースに置き換え
+            for (let i = 0; i < mapWidth; i++) {
+                for (let j = 0; j < mapHeight; j++) {
+                    if (grid[i][j] === selectedSymbol) {
+                        grid[i][j] = ' ';
+                    }
+                }
+            }
+
+            // カスタム地形から削除
+            delete customTerrains[selectedSymbol];
+
+            // メインセレクトボックスからも削除
+            const gridTypeSelect = document.getElementById('grid_type');
+            const options = gridTypeSelect.options;
+            for (let i = options.length - 1; i >= 0; i--) {
+                if (options[i].value === selectedSymbol) {
+                    gridTypeSelect.removeChild(options[i]);
+                    break;
+                }
+            }
+
+            // 現在選択中の地形が削除された地形だった場合、デフォルトに変更
+            if (currentTerrain === selectedSymbol) {
+                currentTerrain = '.';
+                gridTypeSelect.value = '.';
+            }
+
+            // グリッドを再描画
+            drawGrid();
+
+            // 削除ダイアログを更新
+            updateDeleteDialog();
+
+            // テキストを更新
+            update_texts();
+
+            // モーダルを閉じる
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            if (modal) {
+                modal.hide();
+            }
+
+            // 成功メッセージを表示
+            showToast(`地形 "${selectedSymbol}" が削除されました。マップ上の該当地形はスペースに置き換えられました。`, 'success');
+        }
+
         function closeDialog() {
             // Bootstrapモーダルを非表示
             const modal = bootstrap.Modal.getInstance(document.getElementById('symbolModal'));
@@ -381,6 +527,10 @@
                                     name: match[2]
                                 };
                             }
+                            if (!currentTerrain.tags) {
+                                currentTerrain.tags = [];
+                            }
+                            currentTerrain.tags.push(currentTerrain.name);
                         } else if (line.startsWith('J:')) {
                             currentTerrain.japaneName = line.substring(2);
                         } else if (line.startsWith('E:')) {
@@ -433,35 +583,128 @@
 
         // 新規地形定義ダイアログのHTML更新
         function updateSymbolDialog() {
-            // 地形セレクトボックスをクリア
-            const actualSelect = document.getElementById('actualTerrain');
-            const visualSelect = document.getElementById('visualTerrain');
-
-            // 既存のオプションをクリア
-            actualSelect.innerHTML = '<option value="">選択してください</option>';
-            visualSelect.innerHTML = '<option value="">選択してください</option>';
-
-            // セレクトボックスに地形データを追加
-            terrainDefinitions.forEach(terrain => {
-                const displayName = `${terrain.id}: ${terrain.japaneName || terrain.englishName || terrain.name}`;
-
-                [actualSelect, visualSelect].forEach(select => {
-                    const option = document.createElement('option');
-                    option.value = terrain.id;
-                    option.textContent = displayName;
-                    select.appendChild(option);
-                });
-            });
+            // 地形セレクトボックスを初期化
+            populateActualTerrain();
+            populateVisualTerrain();
 
             // モンスターセレクトボックスを更新
             populateMonsterSelect();
 
             // イベントリスナーを追加（既存のリスナーをクリア）
+            const actualSelect = document.getElementById('actualTerrain');
+            const visualSelect = document.getElementById('visualTerrain');
+            
             actualSelect.removeEventListener('change', onActualTerrainChange);
             visualSelect.removeEventListener('change', onVisualTerrainChange);
 
             actualSelect.addEventListener('change', onActualTerrainChange);
             visualSelect.addEventListener('change', onVisualTerrainChange);
+        }
+
+        // 実際の地形セレクトボックスを更新する関数
+        function populateActualTerrain(filterText = '') {
+            const actualSelect = document.getElementById('actualTerrain');
+            actualSelect.innerHTML = '<option value="">選択してください</option>';
+
+            const filteredTerrains = terrainDefinitions.filter(terrain => {
+                if (!filterText) return true;
+                
+                const baseName = terrain.japaneName || terrain.englishName || terrain.name || '';
+                const tagsText = terrain.tags ? terrain.tags.join(' ') : '';
+                const searchText = filterText.toLowerCase();
+                
+                return baseName.toLowerCase().includes(searchText) || 
+                       tagsText.toLowerCase().includes(searchText) ||
+                       terrain.id.toString().includes(searchText);
+            });
+
+            filteredTerrains.forEach(terrain => {
+                const baseName = terrain.japaneName || terrain.englishName || terrain.name;
+                let displayName = `${terrain.id}: ${baseName}`;
+                
+                if (terrain.tags && terrain.tags.length > 0) {
+                    const tagsText = terrain.tags.join(', ');
+                    displayName += ` (${tagsText})`;
+                }
+
+                const option = document.createElement('option');
+                option.value = terrain.id;
+                option.textContent = displayName;
+                actualSelect.appendChild(option);
+            });
+
+            // 検索結果の件数を表示
+            const filterInput = document.getElementById('actualTerrainFilter');
+            if (filterText && filterInput) {
+                filterInput.placeholder = `${filteredTerrains.length}件見つかりました`;
+            } else if (filterInput) {
+                filterInput.placeholder = '地形名で検索...';
+            }
+        }
+
+        // 見た目の地形セレクトボックスを更新する関数
+        function populateVisualTerrain(filterText = '') {
+            const visualSelect = document.getElementById('visualTerrain');
+            visualSelect.innerHTML = '<option value="">選択してください</option>';
+
+            const filteredTerrains = terrainDefinitions.filter(terrain => {
+                if (!filterText) return true;
+                
+                const baseName = terrain.japaneName || terrain.englishName || terrain.name || '';
+                const tagsText = terrain.tags ? terrain.tags.join(' ') : '';
+                const searchText = filterText.toLowerCase();
+                
+                return baseName.toLowerCase().includes(searchText) || 
+                       tagsText.toLowerCase().includes(searchText) ||
+                       terrain.id.toString().includes(searchText);
+            });
+
+            filteredTerrains.forEach(terrain => {
+                const baseName = terrain.japaneName || terrain.englishName || terrain.name;
+                let displayName = `${terrain.id}: ${baseName}`;
+                
+                if (terrain.tags && terrain.tags.length > 0) {
+                    const tagsText = terrain.tags.join(', ');
+                    displayName += ` (${tagsText})`;
+                }
+
+                const option = document.createElement('option');
+                option.value = terrain.id;
+                option.textContent = displayName;
+                visualSelect.appendChild(option);
+            });
+
+            // 検索結果の件数を表示
+            const filterInput = document.getElementById('visualTerrainFilter');
+            if (filterText && filterInput) {
+                filterInput.placeholder = `${filteredTerrains.length}件見つかりました`;
+            } else if (filterInput) {
+                filterInput.placeholder = '地形名で検索...';
+            }
+        }
+
+        // 実際の地形フィルター機能
+        function filterActualTerrain() {
+            const filterText = document.getElementById('actualTerrainFilter').value;
+            populateActualTerrain(filterText);
+        }
+
+        // 見た目の地形フィルター機能
+        function filterVisualTerrain() {
+            const filterText = document.getElementById('visualTerrainFilter').value;
+            populateVisualTerrain(filterText);
+        }
+
+        // 実際の地形フィルターをクリア
+        function clearActualTerrainFilter() {
+            document.getElementById('actualTerrainFilter').value = '';
+            populateActualTerrain();
+        }
+
+        // 見た目の地形フィルターをクリア
+        function clearVisualTerrainFilter() {
+            document.getElementById('visualTerrainFilter').value = '';
+            populateVisualTerrain();
         }
 
         // モンスターセレクトボックスを更新する関数
@@ -621,7 +864,7 @@
             const actualName = actualTerrainInfo ? (actualTerrainInfo.japaneName || actualTerrainInfo.englishName || actualTerrainInfo.name) : 'Unknown';
             const visualName = visualTerrainInfo ? (visualTerrainInfo.japaneName || visualTerrainInfo.englishName || visualTerrainInfo.name) : 'Unknown';
 
-            let description = `カスタム地形 (実際: ${actualName}, 見た目: ${visualName}`;
+            let description = `${actualName}(${actualTerrainInfo.tags.join(', ')}) 見た目: ${visualName}(${visualTerrainInfo.tags.join(', ')})`;
 
             if (terrainData.monster) {
                 const monsterInfo = monsterDefinitions.find(m => m.id == terrainData.monster);
