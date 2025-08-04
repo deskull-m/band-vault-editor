@@ -1147,6 +1147,9 @@
                             <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridLeftToRight} title="左から右へミラー">
                                 <i className="bi bi-chevron-double-right"></i>
                             </button>
+                            <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridTopToBottom} title="上から下へミラー">
+                                <i className="bi bi-chevron-double-down"></i>
+                            </button>
                             <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridDiagonal} title="対角線ミラー">
                                 <i className="bi bi-slash-lg"></i>
                             </button>
@@ -1247,6 +1250,16 @@
         for (let j = 0; j < mapHeight; j++) {
             for (let i = 0; i < Math.floor(mapWidth / 2); i++) {
                 grid[mapWidth - 1 - i][j] = grid[i][j];
+            }
+        }
+        drawGrid();
+        update_texts();
+    }
+
+    function MirrorGridTopToBottom() {
+        for (let i = 0; i < mapWidth; i++) {
+            for (let j = 0; j < Math.floor(mapHeight / 2); j++) {
+                grid[i][mapHeight - 1 - j] = grid[i][j];
             }
         }
         drawGrid();
