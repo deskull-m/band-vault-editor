@@ -86,8 +86,10 @@
                         <div class="mb-3">
                             <label for="actualTerrain" class="form-label">実際の地形:</label>
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="actualTerrainFilter" placeholder="地形名で検索..." onkeyup="filterActualTerrain()">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearActualTerrainFilter()">クリア</button>
+                                <input type="text" class="form-control" id="actualTerrainFilter" placeholder="地形名で検索..."
+                                    onkeyup="filterActualTerrain()">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="clearActualTerrainFilter()">クリア</button>
                             </div>
                             <select class="form-select" id="actualTerrain" size="5">
                                 <option value="">選択してください</option>
@@ -96,8 +98,10 @@
                         <div class="mb-3">
                             <label for="visualTerrain" class="form-label">見た目の地形:</label>
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="visualTerrainFilter" placeholder="地形名で検索..." onkeyup="filterVisualTerrain()">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearVisualTerrainFilter()">クリア</button>
+                                <input type="text" class="form-control" id="visualTerrainFilter" placeholder="地形名で検索..."
+                                    onkeyup="filterVisualTerrain()">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="clearVisualTerrainFilter()">クリア</button>
                             </div>
                             <select class="form-select" id="visualTerrain" size="5">
                                 <option value="">選択してください</option>
@@ -106,8 +110,10 @@
                         <div class="mb-3">
                             <label for="monsterSelect" class="form-label">配置モンスター (オプション):</label>
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="monsterFilter" placeholder="モンスター名で検索..." onkeyup="filterMonsters()">
-                                <button class="btn btn-outline-secondary" type="button" onclick="clearMonsterFilter()">クリア</button>
+                                <input type="text" class="form-control" id="monsterFilter" placeholder="モンスター名で検索..."
+                                    onkeyup="filterMonsters()">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="clearMonsterFilter()">クリア</button>
                             </div>
                             <select class="form-select" id="monsterSelect" size="5">
                                 <option value="">なし</option>
@@ -159,6 +165,10 @@
                 <i class="bi bi-arrow-clockwise"></i> リドゥ
             </button>
         </div>
+        <button id="flood-fill-btn" onclick="toggleFloodFillMode()" class="btn btn-outline-info me-2"
+            title="同じ地形の連続領域を一括で塗りつぶします (Fキー)">
+            <i class="bi bi-paint-bucket"></i> 塗りつぶし
+        </button>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
             <input type="number" id="tile_size" value="24" min="1" max="100" step="1" onchange="updateTileSize()">
@@ -240,14 +250,14 @@
                 mapType: mapType,
                 customTerrains: JSON.parse(JSON.stringify(customTerrains)) // ディープコピー
             };
-            
+
             undoStack.push(state);
-            
+
             // スタックサイズを制限
             if (undoStack.length > MAX_UNDO_STEPS) {
                 undoStack.shift();
             }
-            
+
             // 新しい操作が行われたのでリドゥスタックをクリア
             redoStack = [];
         }
@@ -261,17 +271,17 @@
             mapID = state.mapID;
             mapType = state.mapType;
             customTerrains = JSON.parse(JSON.stringify(state.customTerrains)); // ディープコピー
-            
+
             // UI要素を更新
             document.getElementById('vault-width').value = mapWidth;
             document.getElementById('vault-height').value = mapHeight;
             document.getElementById('vault-name').value = mapName;
             document.getElementById('vault-id').value = mapID;
             document.getElementById('vault-type').value = mapType;
-            
+
             // カスタム地形のセレクトボックスを再構築
             rebuildCustomTerrainOptions();
-            
+
             // グリッドとテキストを更新
             drawGrid();
             update_texts();
@@ -280,7 +290,7 @@
         // カスタム地形のセレクトボックスを再構築する関数
         function rebuildCustomTerrainOptions() {
             const gridTypeSelect = document.getElementById('grid_type');
-            
+
             // 既存のカスタム地形オプションを削除
             const options = Array.from(gridTypeSelect.options);
             options.forEach(option => {
@@ -289,7 +299,7 @@
                     gridTypeSelect.removeChild(option);
                 }
             });
-            
+
             // カスタム地形を再追加
             for (let symbol in customTerrains) {
                 addSymbolToMainSelect(symbol);
@@ -308,7 +318,7 @@
                 showToast('アンドゥできる操作がありません', 'info');
                 return;
             }
-            
+
             // 現在の状態をリドゥスタックに保存
             const currentState = {
                 grid: grid.map(row => [...row]),
@@ -320,11 +330,11 @@
                 customTerrains: JSON.parse(JSON.stringify(customTerrains))
             };
             redoStack.push(currentState);
-            
+
             // 前の状態を復元
             const previousState = undoStack.pop();
             restoreState(previousState);
-            
+
             showToast('操作を元に戻しました', 'success');
         }
 
@@ -334,7 +344,7 @@
                 showToast('リドゥできる操作がありません', 'info');
                 return;
             }
-            
+
             // 現在の状態をアンドゥスタックに保存
             const currentState = {
                 grid: grid.map(row => [...row]),
@@ -346,12 +356,80 @@
                 customTerrains: JSON.parse(JSON.stringify(customTerrains))
             };
             undoStack.push(currentState);
-            
+
             // 次の状態を復元
             const nextState = redoStack.pop();
             restoreState(nextState);
-            
+
             showToast('操作をやり直しました', 'success');
+        }
+
+        // フラッドフィル（塗りつぶし）機能
+        function floodFill(startX, startY, newTerrain) {
+            const originalTerrain = grid[startX][startY];
+
+            // 同じ地形の場合は何もしない
+            if (originalTerrain === newTerrain) {
+                return false;
+            }
+
+            // 状態を保存
+            saveState();
+
+            // BFS（幅優先探索）を使用してフラッドフィル
+            const queue = [[startX, startY]];
+            const visited = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(false));
+
+            while (queue.length > 0) {
+                const [x, y] = queue.shift();
+
+                // 範囲外または既に訪問済みの場合はスキップ
+                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight || visited[x][y]) {
+                    continue;
+                }
+
+                // 異なる地形の場合はスキップ
+                if (grid[x][y] !== originalTerrain) {
+                    continue;
+                }
+
+                // 地形を変更し、訪問済みにマーク
+                grid[x][y] = newTerrain;
+                visited[x][y] = true;
+
+                // 隣接する4方向を探索キューに追加
+                queue.push([x + 1, y]);
+                queue.push([x - 1, y]);
+                queue.push([x, y + 1]);
+                queue.push([x, y - 1]);
+            }
+
+            // グリッドとテキストを更新
+            drawGrid();
+            update_texts();
+
+            return true;
+        }
+
+        // フラッドフィルモードの状態管理
+        let isFloodFillMode = false;
+
+        // フラッドフィルモードの切り替え
+        function toggleFloodFillMode() {
+            isFloodFillMode = !isFloodFillMode;
+            const button = document.getElementById('flood-fill-btn');
+
+            if (isFloodFillMode) {
+                button.classList.remove('btn-outline-info');
+                button.classList.add('btn-info');
+                button.innerHTML = '<i class="bi bi-paint-bucket"></i> 塗りつぶし中';
+                showToast('塗りつぶしモードON: 地形をクリックして塗りつぶしてください', 'info');
+            } else {
+                button.classList.remove('btn-info');
+                button.classList.add('btn-outline-info');
+                button.innerHTML = '<i class="bi bi-paint-bucket"></i> 塗りつぶし';
+                showToast('塗りつぶしモードOFF', 'info');
+            }
         }
 
         let mouseDown = false
@@ -454,11 +532,19 @@
                     });
 
                     rect.on('mousedown', function () {
-                        // 状態を保存してからグリッドを変更
-                        saveState();
-                        grid[i][j] = currentTerrain;
-                        update_texts();
-                        drawGrid();
+                        if (isFloodFillMode) {
+                            // フラッドフィルモードの場合
+                            const filled = floodFill(i, j, currentTerrain);
+                            if (filled) {
+                                showToast(`地形 "${grid[i][j]}" を "${currentTerrain}" で塗りつぶしました`, 'success');
+                            }
+                        } else {
+                            // 通常モードの場合
+                            saveState();
+                            grid[i][j] = currentTerrain;
+                            update_texts();
+                            drawGrid();
+                        }
                     });
 
                     konva_text[i][j] = new Konva.Text({
@@ -472,7 +558,7 @@
                     });
 
                     gridUpdate = function () {
-                        if (mouseDown) {
+                        if (mouseDown && !isFloodFillMode) {
                             grid[i][j] = currentTerrain;
                             this.fill(grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
                             konva_text[i][j].text(grid[i][j]);
@@ -738,7 +824,7 @@
             // イベントリスナーを追加（既存のリスナーをクリア）
             const actualSelect = document.getElementById('actualTerrain');
             const visualSelect = document.getElementById('visualTerrain');
-            
+
             actualSelect.removeEventListener('change', onActualTerrainChange);
             visualSelect.removeEventListener('change', onVisualTerrainChange);
 
@@ -753,20 +839,20 @@
 
             const filteredTerrains = terrainDefinitions.filter(terrain => {
                 if (!filterText) return true;
-                
+
                 const baseName = terrain.japaneName || terrain.englishName || terrain.name || '';
                 const tagsText = terrain.tags ? terrain.tags.join(' ') : '';
                 const searchText = filterText.toLowerCase();
-                
-                return baseName.toLowerCase().includes(searchText) || 
-                       tagsText.toLowerCase().includes(searchText) ||
-                       terrain.id.toString().includes(searchText);
+
+                return baseName.toLowerCase().includes(searchText) ||
+                    tagsText.toLowerCase().includes(searchText) ||
+                    terrain.id.toString().includes(searchText);
             });
 
             filteredTerrains.forEach(terrain => {
                 const baseName = terrain.japaneName || terrain.englishName || terrain.name;
                 let displayName = `${terrain.id}: ${baseName}`;
-                
+
                 if (terrain.tags && terrain.tags.length > 0) {
                     const tagsText = terrain.tags.join(', ');
                     displayName += ` (${tagsText})`;
@@ -794,20 +880,20 @@
 
             const filteredTerrains = terrainDefinitions.filter(terrain => {
                 if (!filterText) return true;
-                
+
                 const baseName = terrain.japaneName || terrain.englishName || terrain.name || '';
                 const tagsText = terrain.tags ? terrain.tags.join(' ') : '';
                 const searchText = filterText.toLowerCase();
-                
-                return baseName.toLowerCase().includes(searchText) || 
-                       tagsText.toLowerCase().includes(searchText) ||
-                       terrain.id.toString().includes(searchText);
+
+                return baseName.toLowerCase().includes(searchText) ||
+                    tagsText.toLowerCase().includes(searchText) ||
+                    terrain.id.toString().includes(searchText);
             });
 
             filteredTerrains.forEach(terrain => {
                 const baseName = terrain.japaneName || terrain.englishName || terrain.name;
                 let displayName = `${terrain.id}: ${baseName}`;
-                
+
                 if (terrain.tags && terrain.tags.length > 0) {
                     const tagsText = terrain.tags.join(', ');
                     displayName += ` (${tagsText})`;
@@ -859,14 +945,14 @@
 
             const filteredMonsters = monsterDefinitions.filter(monster => {
                 if (!filterText) return true;
-                
+
                 const jaName = monster.name?.ja || monster.japaneName || '';
                 const enName = monster.name?.en || monster.englishName || monster.name || '';
                 const searchText = filterText.toLowerCase();
-                
-                return jaName.toLowerCase().includes(searchText) || 
-                       enName.toLowerCase().includes(searchText) ||
-                       monster.id.toString().includes(searchText);
+
+                return jaName.toLowerCase().includes(searchText) ||
+                    enName.toLowerCase().includes(searchText) ||
+                    monster.id.toString().includes(searchText);
             });
 
             filteredMonsters.forEach(monster => {
@@ -1185,22 +1271,27 @@
         document.getElementById('v_info').addEventListener('input', parseTextToGUI);
 
         // キーボードショートカットの追加
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             // Ctrl+Z または Cmd+Z でアンドゥ
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
                 e.preventDefault();
                 undo();
             }
             // Ctrl+Y または Ctrl+Shift+Z または Cmd+Y または Cmd+Shift+Z でリドゥ
-            else if (((e.ctrlKey || e.metaKey) && e.key === 'y') || 
-                     ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z')) {
+            else if (((e.ctrlKey || e.metaKey) && e.key === 'y') ||
+                ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z')) {
                 e.preventDefault();
                 redo();
+            }
+            // Fキーでフラッドフィルモード切り替え
+            else if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                toggleFloodFillMode();
             }
         });
 
         // 初期状態を保存（ページ読み込み完了後）
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             // 少し遅延させて初期状態を保存
             setTimeout(saveState, 100);
         });
