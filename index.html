@@ -151,6 +151,14 @@
         <!-- 古いsymbolDialogは削除 -->
         <button onclick="openDialog()" class="btn btn-warning">馬鹿馬鹿用独自地形定義</button>
         <button onclick="openDeleteDialog()" class="btn btn-danger">カスタム地形削除</button>
+        <div class="btn-group me-2" role="group" aria-label="アンドゥ/リドゥ">
+            <button onclick="undo()" class="btn btn-outline-secondary" title="元に戻す (Ctrl+Z)">
+                <i class="bi bi-arrow-counterclockwise"></i> アンドゥ
+            </button>
+            <button onclick="redo()" class="btn btn-outline-secondary" title="やり直し (Ctrl+Y)">
+                <i class="bi bi-arrow-clockwise"></i> リドゥ
+            </button>
+        </div>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
             <input type="number" id="tile_size" value="24" min="1" max="100" step="1" onchange="updateTileSize()">
@@ -189,6 +197,11 @@
         let monsterDefinitions = []; // モンスター定義データ
         let customTerrains = {}; // カスタム地形の保存用
 
+        // アンドゥ/リドゥ用の状態管理
+        let undoStack = [];
+        let redoStack = [];
+        const MAX_UNDO_STEPS = 50; // 最大アンドゥ回数
+
         function update_texts() {
             let texts = document.getElementById('v_info');
             texts.value = `N:${mapID}:${mapName}\r\n`;
@@ -214,6 +227,131 @@
                 }
                 texts.value += '\r\n';
             }
+        }
+
+        // 現在の状態を保存する関数
+        function saveState() {
+            const state = {
+                grid: grid.map(row => [...row]), // ディープコピー
+                mapWidth: mapWidth,
+                mapHeight: mapHeight,
+                mapName: mapName,
+                mapID: mapID,
+                mapType: mapType,
+                customTerrains: JSON.parse(JSON.stringify(customTerrains)) // ディープコピー
+            };
+            
+            undoStack.push(state);
+            
+            // スタックサイズを制限
+            if (undoStack.length > MAX_UNDO_STEPS) {
+                undoStack.shift();
+            }
+            
+            // 新しい操作が行われたのでリドゥスタックをクリア
+            redoStack = [];
+        }
+
+        // 状態を復元する関数
+        function restoreState(state) {
+            grid = state.grid.map(row => [...row]); // ディープコピー
+            mapWidth = state.mapWidth;
+            mapHeight = state.mapHeight;
+            mapName = state.mapName;
+            mapID = state.mapID;
+            mapType = state.mapType;
+            customTerrains = JSON.parse(JSON.stringify(state.customTerrains)); // ディープコピー
+            
+            // UI要素を更新
+            document.getElementById('vault-width').value = mapWidth;
+            document.getElementById('vault-height').value = mapHeight;
+            document.getElementById('vault-name').value = mapName;
+            document.getElementById('vault-id').value = mapID;
+            document.getElementById('vault-type').value = mapType;
+            
+            // カスタム地形のセレクトボックスを再構築
+            rebuildCustomTerrainOptions();
+            
+            // グリッドとテキストを更新
+            drawGrid();
+            update_texts();
+        }
+
+        // カスタム地形のセレクトボックスを再構築する関数
+        function rebuildCustomTerrainOptions() {
+            const gridTypeSelect = document.getElementById('grid_type');
+            
+            // 既存のカスタム地形オプションを削除
+            const options = Array.from(gridTypeSelect.options);
+            options.forEach(option => {
+                // デフォルトの地形以外（カスタム地形）を削除
+                if (!isDefaultTerrain(option.value)) {
+                    gridTypeSelect.removeChild(option);
+                }
+            });
+            
+            // カスタム地形を再追加
+            for (let symbol in customTerrains) {
+                addSymbolToMainSelect(symbol);
+            }
+        }
+
+        // デフォルト地形かどうかを判定する関数
+        function isDefaultTerrain(symbol) {
+            const defaultSymbols = ['.', ' ', '%', '#', '$', 'X', 'Y', '*', '+', '-', "'", '^', '&', '@', '9', '8', ',', ':', '[', '~', '=', 'v', 'w', 'f', 'F', 'g', 'G', 'h', 'H', 'i', 'I'];
+            return defaultSymbols.includes(symbol);
+        }
+
+        // アンドゥ機能
+        function undo() {
+            if (undoStack.length === 0) {
+                showToast('アンドゥできる操作がありません', 'info');
+                return;
+            }
+            
+            // 現在の状態をリドゥスタックに保存
+            const currentState = {
+                grid: grid.map(row => [...row]),
+                mapWidth: mapWidth,
+                mapHeight: mapHeight,
+                mapName: mapName,
+                mapID: mapID,
+                mapType: mapType,
+                customTerrains: JSON.parse(JSON.stringify(customTerrains))
+            };
+            redoStack.push(currentState);
+            
+            // 前の状態を復元
+            const previousState = undoStack.pop();
+            restoreState(previousState);
+            
+            showToast('操作を元に戻しました', 'success');
+        }
+
+        // リドゥ機能
+        function redo() {
+            if (redoStack.length === 0) {
+                showToast('リドゥできる操作がありません', 'info');
+                return;
+            }
+            
+            // 現在の状態をアンドゥスタックに保存
+            const currentState = {
+                grid: grid.map(row => [...row]),
+                mapWidth: mapWidth,
+                mapHeight: mapHeight,
+                mapName: mapName,
+                mapID: mapID,
+                mapType: mapType,
+                customTerrains: JSON.parse(JSON.stringify(customTerrains))
+            };
+            undoStack.push(currentState);
+            
+            // 次の状態を復元
+            const nextState = redoStack.pop();
+            restoreState(nextState);
+            
+            showToast('操作をやり直しました', 'success');
         }
 
         let mouseDown = false
@@ -260,12 +398,14 @@
         let mapType = document.getElementById('vault-type').value;
 
         document.getElementById('vault-width').onchange = function () {
+            saveState();
             mapWidth = document.getElementById('vault-width').value;
             drawGrid();
             update_texts();
         }
 
         document.getElementById('vault-height').onchange = function () {
+            saveState();
             mapHeight = document.getElementById('vault-height').value;
             drawGrid();
             update_texts();
@@ -314,6 +454,8 @@
                     });
 
                     rect.on('mousedown', function () {
+                        // 状態を保存してからグリッドを変更
+                        saveState();
                         grid[i][j] = currentTerrain;
                         update_texts();
                         drawGrid();
@@ -431,6 +573,9 @@
             if (!confirm(`地形 "${selectedSymbol}" を削除しますか？この操作は取り消せません。`)) {
                 return;
             }
+
+            // 状態を保存
+            saveState();
 
             // マップ上の削除対象地形をスペースに置き換え
             for (let i = 0; i < mapWidth; i++) {
@@ -826,6 +971,9 @@
                 return;
             }
 
+            // 状態を保存
+            saveState();
+
             // カスタム地形を保存
             customTerrains[symbol] = {
                 actual: actualTerrain,
@@ -1036,6 +1184,27 @@
 
         document.getElementById('v_info').addEventListener('input', parseTextToGUI);
 
+        // キーボードショートカットの追加
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Z または Cmd+Z でアンドゥ
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+            // Ctrl+Y または Ctrl+Shift+Z または Cmd+Y または Cmd+Shift+Z でリドゥ
+            else if (((e.ctrlKey || e.metaKey) && e.key === 'y') || 
+                     ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z')) {
+                e.preventDefault();
+                redo();
+            }
+        });
+
+        // 初期状態を保存（ページ読み込み完了後）
+        window.addEventListener('load', function() {
+            // 少し遅延させて初期状態を保存
+            setTimeout(saveState, 100);
+        });
+
     </script>
 </body>
 
@@ -1050,6 +1219,7 @@
     }
 
     function SlideUp() {
+        saveState();
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight - 1; j++) {
                 grid[i][j] = grid[i][j + 1];
@@ -1060,6 +1230,7 @@
     }
 
     function SlideLeft() {
+        saveState();
         for (let i = 0; i < mapWidth - 1; i++) {
             for (let j = 0; j < mapHeight; j++) {
                 grid[i][j] = grid[i + 1][j];
@@ -1070,6 +1241,7 @@
     }
 
     function SlideRight() {
+        saveState();
         for (let i = mapWidth - 1; i > 0; i--) {
             for (let j = 0; j < mapHeight; j++) {
                 grid[i][j] = grid[i - 1][j];
@@ -1080,6 +1252,7 @@
     }
 
     function SlideDown() {
+        saveState();
         for (let i = 0; i < mapWidth; i++) {
             for (let j = mapHeight - 1; j > 0; j--) {
                 grid[i][j] = grid[i][j - 1];
@@ -1161,6 +1334,7 @@
     }
 
     function CoatingOutsideVault() {
+        saveState();
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
                 if (grid[i][j] !== " ") {
@@ -1193,6 +1367,7 @@
     }
 
     function RotateLeft() {
+        saveState();
         let newGrid = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(" "));
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
@@ -1208,6 +1383,7 @@
     }
 
     function RotateRight() {
+        saveState();
         let newGrid = Array.from({ length: mapHeight }, () => Array(mapWidth).fill(" "));
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
@@ -1223,6 +1399,7 @@
     }
 
     function ReverseGridLeftRight() {
+        saveState();
         let newGrid = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(" "));
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
@@ -1235,6 +1412,7 @@
     }
 
     function ReverseGridUpDown() {
+        saveState();
         let newGrid = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(" "));
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < mapHeight; j++) {
@@ -1247,6 +1425,7 @@
     }
 
     function MirrorGridLeftToRight() {
+        saveState();
         for (let j = 0; j < mapHeight; j++) {
             for (let i = 0; i < Math.floor(mapWidth / 2); i++) {
                 grid[mapWidth - 1 - i][j] = grid[i][j];
@@ -1257,6 +1436,7 @@
     }
 
     function MirrorGridTopToBottom() {
+        saveState();
         for (let i = 0; i < mapWidth; i++) {
             for (let j = 0; j < Math.floor(mapHeight / 2); j++) {
                 grid[i][mapHeight - 1 - j] = grid[i][j];
@@ -1268,6 +1448,7 @@
 
     // 左下から右上への対角線でミラー
     function MirrorGridDiagonal() {
+        saveState();
         for (let i = 0; i < Math.min(mapWidth, mapHeight); i++) {
             for (let j = i + 1; j < Math.min(mapWidth, mapHeight); j++) {
                 grid[j][i] = grid[i][j];
