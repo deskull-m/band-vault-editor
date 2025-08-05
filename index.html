@@ -194,6 +194,20 @@
                     <i class="bi bi-square-fill"></i> 塗りつぶし矩形
                 </label>
             </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="drawingMode" id="circleMode" value="circle"
+                    onchange="setDrawingMode()">
+                <label class="form-check-label text-white" for="circleMode" title="円形・楕円の枠線を描画 (Cキー)">
+                    <i class="bi bi-circle"></i> 円形・楕円
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="drawingMode" id="filledCircleMode"
+                    value="filledCircle" onchange="setDrawingMode()">
+                <label class="form-check-label text-white" for="filledCircleMode" title="円形・楕円を塗りつぶして描画 (Shift+Cキー)">
+                    <i class="bi bi-circle-fill"></i> 塗りつぶし円形・楕円
+                </label>
+            </div>
         </div>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
@@ -441,6 +455,8 @@
         let isFloodFillMode = false;
         let isRectangleMode = false;
         let isFilledRectangleMode = false;
+        let isCircleMode = false;
+        let isFilledCircleMode = false;
 
         // 矩形描画用の変数
         let isDrawingRectangle = false;
@@ -449,6 +465,14 @@
         let rectangleEndX = -1;
         let rectangleEndY = -1;
         let previewRectangle = null;
+
+        // 円形描画用の変数
+        let isDrawingCircle = false;
+        let circleStartX = -1;
+        let circleStartY = -1;
+        let circleEndX = -1;
+        let circleEndY = -1;
+        let previewCircle = null;
 
         // Konvaのグローバル変数
         let globalStage = null;
@@ -460,6 +484,8 @@
             const floodFillMode = document.getElementById('floodFillMode');
             const rectangleMode = document.getElementById('rectangleMode');
             const filledRectangleMode = document.getElementById('filledRectangleMode');
+            const circleMode = document.getElementById('circleMode');
+            const filledCircleMode = document.getElementById('filledCircleMode');
 
             // プレビューをクリア
             clearPreview();
@@ -471,10 +497,19 @@
             rectangleEndX = -1;
             rectangleEndY = -1;
 
+            // 円形描画状態をリセット
+            isDrawingCircle = false;
+            circleStartX = -1;
+            circleStartY = -1;
+            circleEndX = -1;
+            circleEndY = -1;
+
             // 全てのモードをリセット
             isFloodFillMode = false;
             isRectangleMode = false;
             isFilledRectangleMode = false;
+            isCircleMode = false;
+            isFilledCircleMode = false;
 
             if (normalMode.checked) {
                 showToast('通常描画モードに切り替えました', 'info');
@@ -487,6 +522,12 @@
             } else if (filledRectangleMode.checked) {
                 isFilledRectangleMode = true;
                 showToast('塗りつぶし矩形モードに切り替えました: ドラッグして矩形を塗りつぶしてください', 'info');
+            } else if (circleMode.checked) {
+                isCircleMode = true;
+                showToast('円形・楕円描画モードに切り替えました: ドラッグして円形・楕円の枠線を描画してください', 'info');
+            } else if (filledCircleMode.checked) {
+                isFilledCircleMode = true;
+                showToast('塗りつぶし円形・楕円モードに切り替えました: ドラッグして円形・楕円を塗りつぶしてください', 'info');
             }
         }
 
@@ -569,6 +610,244 @@
 
             update_texts();
             drawGrid();
+        }
+
+        // 円形・楕円描画関数
+        function drawCircle() {
+            if (circleStartX === null || circleStartY === null) return;
+
+            // プレビューをクリア
+            clearPreview();
+
+            saveState();
+
+            const centerX = circleStartX;
+            const centerY = circleStartY;
+            const radiusX = Math.abs(circleEndX - circleStartX);
+            const radiusY = Math.abs(circleEndY - circleStartY);
+
+            if (isFilledCircleMode) {
+                // 塗りつぶし円形・楕円
+                const points = getFilledEllipsePoints(centerX, centerY, radiusX, radiusY);
+                points.forEach(([x, y]) => {
+                    if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
+                        grid[x][y] = currentTerrain;
+                    }
+                });
+                const shapeType = radiusX === radiusY ? '円形' : '楕円';
+                showToast(`塗りつぶし${shapeType}を描画しました (半径: ${radiusX}×${radiusY})`, 'success');
+            } else {
+                // 円形・楕円の枠線のみ
+                const points = getEllipsePoints(centerX, centerY, radiusX, radiusY);
+                points.forEach(([x, y]) => {
+                    if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
+                        grid[x][y] = currentTerrain;
+                    }
+                });
+                const shapeType = radiusX === radiusY ? '円形' : '楕円';
+                showToast(`${shapeType}の枠線を描画しました (半径: ${radiusX}×${radiusY})`, 'success');
+            }
+
+            update_texts();
+            drawGrid();
+        }
+
+        // 楕円周上の点を取得する関数（修正ミッドポイント楕円アルゴリズム）
+        function getEllipsePoints(centerX, centerY, radiusX, radiusY) {
+            const points = [];
+            
+            // 円の場合は従来のアルゴリズムを使用
+            if (radiusX === radiusY) {
+                return getCirclePoints(centerX, centerY, radiusX);
+            }
+            
+            // 楕円の場合
+            if (radiusX === 0 && radiusY === 0) {
+                points.push([centerX, centerY]);
+                return points;
+            }
+            
+            if (radiusX === 0) {
+                // 垂直線
+                for (let y = -radiusY; y <= radiusY; y++) {
+                    points.push([centerX, centerY + y]);
+                }
+                return points;
+            }
+            
+            if (radiusY === 0) {
+                // 水平線
+                for (let x = -radiusX; x <= radiusX; x++) {
+                    points.push([centerX + x, centerY]);
+                }
+                return points;
+            }
+            
+            // 楕円アルゴリズム（領域1）
+            let x = 0;
+            let y = radiusY;
+            let dx = 2 * radiusY * radiusY * x;
+            let dy = 2 * radiusX * radiusX * y;
+            let err = radiusY * radiusY - radiusX * radiusX * radiusY + radiusX * radiusX / 4;
+            
+            while (dx < dy) {
+                // 4象限の点を追加
+                points.push([centerX + x, centerY + y]);
+                points.push([centerX - x, centerY + y]);
+                points.push([centerX + x, centerY - y]);
+                points.push([centerX - x, centerY - y]);
+                
+                if (err < 0) {
+                    x++;
+                    dx += 2 * radiusY * radiusY;
+                    err += dx + radiusY * radiusY;
+                } else {
+                    x++;
+                    y--;
+                    dx += 2 * radiusY * radiusY;
+                    dy -= 2 * radiusX * radiusX;
+                    err += dx - dy + radiusY * radiusY;
+                }
+            }
+            
+            // 楕円アルゴリズム（領域2）
+            err = radiusY * radiusY * (x + 0.5) * (x + 0.5) + radiusX * radiusX * (y - 1) * (y - 1) - radiusX * radiusX * radiusY * radiusY;
+            
+            while (y >= 0) {
+                // 4象限の点を追加
+                points.push([centerX + x, centerY + y]);
+                points.push([centerX - x, centerY + y]);
+                points.push([centerX + x, centerY - y]);
+                points.push([centerX - x, centerY - y]);
+                
+                if (err > 0) {
+                    y--;
+                    dy -= 2 * radiusX * radiusX;
+                    err += radiusX * radiusX - dy;
+                } else {
+                    y--;
+                    x++;
+                    dx += 2 * radiusY * radiusY;
+                    dy -= 2 * radiusX * radiusX;
+                    err += dx - dy + radiusX * radiusX;
+                }
+            }
+            
+            // 重複を除去
+            const uniquePoints = [];
+            const pointSet = new Set();
+            points.forEach(([x, y]) => {
+                const key = `${x},${y}`;
+                if (!pointSet.has(key)) {
+                    pointSet.add(key);
+                    uniquePoints.push([x, y]);
+                }
+            });
+            
+            return uniquePoints;
+        }
+
+        // 円周上の点を取得する関数（ブレゼンハムの円描画アルゴリズム）
+        function getCirclePoints(centerX, centerY, radius) {
+            const points = [];
+            if (radius === 0) {
+                points.push([centerX, centerY]);
+                return points;
+            }
+
+            let x = 0;
+            let y = radius;
+            let d = 3 - 2 * radius;
+
+            while (x <= y) {
+                // 8方向の対称点を追加
+                points.push([centerX + x, centerY + y]);
+                points.push([centerX - x, centerY + y]);
+                points.push([centerX + x, centerY - y]);
+                points.push([centerX - x, centerY - y]);
+                points.push([centerX + y, centerY + x]);
+                points.push([centerX - y, centerY + x]);
+                points.push([centerX + y, centerY - x]);
+                points.push([centerX - y, centerY - x]);
+
+                if (d < 0) {
+                    d = d + 4 * x + 6;
+                } else {
+                    d = d + 4 * (x - y) + 10;
+                    y--;
+                }
+                x++;
+            }
+
+            // 重複を除去
+            const uniquePoints = [];
+            const pointSet = new Set();
+            points.forEach(([x, y]) => {
+                const key = `${x},${y}`;
+                if (!pointSet.has(key)) {
+                    pointSet.add(key);
+                    uniquePoints.push([x, y]);
+                }
+            });
+
+            return uniquePoints;
+        }
+
+        // 塗りつぶし楕円の点を取得する関数
+        function getFilledEllipsePoints(centerX, centerY, radiusX, radiusY) {
+            const points = [];
+            
+            // 円の場合は従来のアルゴリズムを使用
+            if (radiusX === radiusY) {
+                return getFilledCirclePoints(centerX, centerY, radiusX);
+            }
+            
+            // 楕円の内部を塗りつぶし
+            for (let x = centerX - radiusX; x <= centerX + radiusX; x++) {
+                for (let y = centerY - radiusY; y <= centerY + radiusY; y++) {
+                    // 楕円の方程式: (x-h)^2/a^2 + (y-k)^2/b^2 <= 1
+                    const normalizedX = (x - centerX);
+                    const normalizedY = (y - centerY);
+                    
+                    if (radiusX === 0 && radiusY === 0) {
+                        if (x === centerX && y === centerY) {
+                            points.push([x, y]);
+                        }
+                    } else if (radiusX === 0) {
+                        if (x === centerX && Math.abs(normalizedY) <= radiusY) {
+                            points.push([x, y]);
+                        }
+                    } else if (radiusY === 0) {
+                        if (y === centerY && Math.abs(normalizedX) <= radiusX) {
+                            points.push([x, y]);
+                        }
+                    } else {
+                        const ellipseValue = (normalizedX * normalizedX) / (radiusX * radiusX) + 
+                                           (normalizedY * normalizedY) / (radiusY * radiusY);
+                        if (ellipseValue <= 1.0) {
+                            points.push([x, y]);
+                        }
+                    }
+                }
+            }
+
+            return points;
+        }
+
+        // 塗りつぶし円形の点を取得する関数
+        function getFilledCirclePoints(centerX, centerY, radius) {
+            const points = [];
+            
+            for (let x = centerX - radius; x <= centerX + radius; x++) {
+                for (let y = centerY - radius; y <= centerY + radius; y++) {
+                    const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+                    if (distance <= radius) {
+                        points.push([x, y]);
+                    }
+                }
+            }
+
+            return points;
         }
 
         // プレビュー矩形を描画する関数
@@ -657,18 +936,125 @@
             // プレビューをレイヤーに追加
             globalLayer.add(previewGroup);
             globalLayer.draw();
+        }
+
+        // プレビュー円形・楕円を描画する関数
+        function drawPreviewCircle() {
+            if (circleStartX === null || circleStartY === null || !globalStage || !globalLayer) return;
+            
+            const centerX = circleStartX;
+            const centerY = circleStartY;
+            const radiusX = Math.abs(circleEndX - circleStartX);
+            const radiusY = Math.abs(circleEndY - circleStartY);
+            
+            // 既存のプレビュー要素を削除
+            const existingPreview = globalLayer.findOne('.preview-circle');
+            if (existingPreview) {
+                existingPreview.destroy();
+            }
+            
+            // プレビューグループを作成
+            const previewGroup = new Konva.Group({
+                name: 'preview-circle'
+            });
+            
+            // 円形・楕円の点を取得
+            const points = isFilledCircleMode ? 
+                getFilledEllipsePoints(centerX, centerY, radiusX, radiusY) : 
+                getEllipsePoints(centerX, centerY, radiusX, radiusY);
+            
+            // 各点を色反転で表示
+            points.forEach(([x, y]) => {
+                if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
+                    // 色反転エフェクト用の矩形
+                    const invertRect = new Konva.Rect({
+                        x: x * gridSize,
+                        y: y * gridSize,
+                        width: gridSize,
+                        height: gridSize,
+                        fill: '#ffffff',
+                        opacity: 0.4,
+                        globalCompositeOperation: 'difference'
+                    });
+                    previewGroup.add(invertRect);
+                    
+                    // 塗りつぶしモードの場合は追加の色付けエフェクト
+                    if (isFilledCircleMode) {
+                        const fillPreview = new Konva.Rect({
+                            x: x * gridSize,
+                            y: y * gridSize,
+                            width: gridSize,
+                            height: gridSize,
+                            fill: '#00ff00', // 緑色でプレビュー
+                            opacity: 0.3
+                        });
+                        previewGroup.add(fillPreview);
+                    }
+                    
+                    // 境界線の描画
+                    const borderRect = new Konva.Rect({
+                        x: x * gridSize,
+                        y: y * gridSize,
+                        width: gridSize,
+                        height: gridSize,
+                        stroke: isFilledCircleMode ? '#00aa00' : '#0000ff', // 塗りつぶしは緑、枠線は青
+                        strokeWidth: 2,
+                        fill: 'transparent'
+                    });
+                    previewGroup.add(borderRect);
+                }
+            });
+            
+            // 楕円の外枠を追加
+            if (radiusX === radiusY) {
+                // 円の場合
+                const circleOutline = new Konva.Circle({
+                    x: centerX * gridSize + gridSize / 2,
+                    y: centerY * gridSize + gridSize / 2,
+                    radius: radiusX * gridSize + gridSize / 2,
+                    stroke: isFilledCircleMode ? '#00aa00' : '#4444ff',
+                    strokeWidth: isFilledCircleMode ? 4 : 3,
+                    dash: isFilledCircleMode ? [6, 3] : [8, 4],
+                    fill: 'transparent'
+                });
+                previewGroup.add(circleOutline);
+            } else {
+                // 楕円の場合
+                const ellipseOutline = new Konva.Ellipse({
+                    x: centerX * gridSize + gridSize / 2,
+                    y: centerY * gridSize + gridSize / 2,
+                    radiusX: radiusX * gridSize + gridSize / 2,
+                    radiusY: radiusY * gridSize + gridSize / 2,
+                    stroke: isFilledCircleMode ? '#00aa00' : '#4444ff',
+                    strokeWidth: isFilledCircleMode ? 4 : 3,
+                    dash: isFilledCircleMode ? [6, 3] : [8, 4],
+                    fill: 'transparent'
+                });
+                previewGroup.add(ellipseOutline);
+            }
+            
+            // プレビューをレイヤーに追加
+            globalLayer.add(previewGroup);
+            globalLayer.draw();
         }        
         
         // プレビューをクリアする関数
         function clearPreview() {
             if (!globalLayer) return;
             
-            // プレビュー要素を削除
-            const existingPreview = globalLayer.findOne('.preview-rectangle');
-            if (existingPreview) {
-                existingPreview.destroy();
-                globalLayer.draw();
+            // 矩形プレビュー要素を削除
+            const existingRectPreview = globalLayer.findOne('.preview-rectangle');
+            if (existingRectPreview) {
+                existingRectPreview.destroy();
             }
+
+            // 円形プレビュー要素を削除
+            const existingCirclePreview = globalLayer.findOne('.preview-circle');
+            if (existingCirclePreview) {
+                existingCirclePreview.destroy();
+            }
+
+            globalLayer.draw();
         }
 
         // グリッドサイズとマップサイズ
@@ -765,6 +1151,15 @@
                                 rectangleEndX = i;
                                 rectangleEndY = j;
                             }
+                        } else if (isCircleMode || isFilledCircleMode) {
+                            // 円形描画モードの場合
+                            if (!isDrawingCircle) {
+                                isDrawingCircle = true;
+                                circleStartX = i;
+                                circleStartY = j;
+                                circleEndX = i;
+                                circleEndY = j;
+                            }
                         } else {
                             // 通常モードの場合
                             saveState();
@@ -792,8 +1187,15 @@
                                 rectangleEndY = j;
                                 drawPreviewRectangle();
                             }
+                        } else if (isCircleMode || isFilledCircleMode) {
+                            // 円形描画モードの場合
+                            if (isDrawingCircle) {
+                                circleEndX = i;
+                                circleEndY = j;
+                                drawPreviewCircle();
+                            }
                         } else {
-                            // 矩形描画モード以外の場合はプレビューをクリア
+                            // 描画モード以外の場合はプレビューをクリア
                             clearPreview();
 
                             if (mouseDown && !isFloodFillMode) {
@@ -819,11 +1221,15 @@
             }
             globalLayer.draw();
 
-            // 矩形描画用のステージイベントハンドラー
+            // 矩形・円形描画用のステージイベントハンドラー
             globalStage.on('mouseup', function () {
                 if ((isRectangleMode || isFilledRectangleMode) && isDrawingRectangle) {
                     isDrawingRectangle = false;
                     drawRectangle();
+                    clearPreview();
+                } else if ((isCircleMode || isFilledCircleMode) && isDrawingCircle) {
+                    isDrawingCircle = false;
+                    drawCircle();
                     clearPreview();
                 }
             });
@@ -1557,6 +1963,20 @@
                 e.preventDefault();
                 const filledRectangleMode = document.getElementById('filledRectangleMode');
                 filledRectangleMode.checked = true;
+                setDrawingMode();
+            }
+            // Cキーで円形描画モード切り替え
+            else if ((e.key === 'c' || e.key === 'C') && !e.shiftKey) {
+                e.preventDefault();
+                const circleMode = document.getElementById('circleMode');
+                circleMode.checked = true;
+                setDrawingMode();
+            }
+            // Shift+Cで塗りつぶし円形モード切り替え
+            else if ((e.key === 'c' || e.key === 'C') && e.shiftKey) {
+                e.preventDefault();
+                const filledCircleMode = document.getElementById('filledCircleMode');
+                filledCircleMode.checked = true;
                 setDrawingMode();
             }
         });
