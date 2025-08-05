@@ -853,7 +853,7 @@
 
         // プレビュー矩形を描画する関数
         function drawPreviewRectangle() {
-            if (rectangleStartX === null || rectangleStartY === null || !globalStage || !globalLayer) return;
+            if (rectangleStartX === -1 || rectangleStartY === -1 || !globalStage || !globalLayer) return;
             
             const minX = Math.min(rectangleStartX, rectangleEndX);
             const maxX = Math.max(rectangleStartX, rectangleEndX);
