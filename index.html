@@ -941,7 +941,7 @@
 
         // プレビュー円形・楕円を描画する関数
         function drawPreviewCircle() {
-            if (circleStartX === null || circleStartY === null || !globalStage || !globalLayer) return;
+            if (circleStartX === -1 || circleStartY === -1 || !globalStage || !globalLayer) return;
             
             const centerX = circleStartX;
             const centerY = circleStartY;
