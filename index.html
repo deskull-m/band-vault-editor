@@ -178,6 +178,18 @@
                     <i class="bi bi-paint-bucket"></i> 塗りつぶし
                 </label>
             </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="drawingMode" id="rectangleMode" value="rectangle" onchange="setDrawingMode()">
+                <label class="form-check-label text-white" for="rectangleMode" title="矩形の枠線を描画 (Rキー)">
+                    <i class="bi bi-square"></i> 矩形
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="drawingMode" id="filledRectangleMode" value="filledRectangle" onchange="setDrawingMode()">
+                <label class="form-check-label text-white" for="filledRectangleMode" title="矩形を塗りつぶして描画 (Shift+Rキー)">
+                    <i class="bi bi-square-fill"></i> 塗りつぶし矩形
+                </label>
+            </div>
         </div>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
@@ -423,18 +435,40 @@
 
         // フラッドフィルモードの状態管理
         let isFloodFillMode = false;
+        let isRectangleMode = false;
+        let isFilledRectangleMode = false;
+
+        // 矩形描画用の変数
+        let isDrawingRectangle = false;
+        let rectangleStartX = -1;
+        let rectangleStartY = -1;
+        let rectangleEndX = -1;
+        let rectangleEndY = -1;
+        let previewRectangle = null;
 
         // 描画モードの設定（ラジオボタン用）
         function setDrawingMode() {
             const normalMode = document.getElementById('normalMode');
             const floodFillMode = document.getElementById('floodFillMode');
+            const rectangleMode = document.getElementById('rectangleMode');
+            const filledRectangleMode = document.getElementById('filledRectangleMode');
+            
+            // 全てのモードをリセット
+            isFloodFillMode = false;
+            isRectangleMode = false;
+            isFilledRectangleMode = false;
             
             if (normalMode.checked) {
-                isFloodFillMode = false;
                 showToast('通常描画モードに切り替えました', 'info');
             } else if (floodFillMode.checked) {
                 isFloodFillMode = true;
                 showToast('塗りつぶしモードに切り替えました: 地形をクリックして塗りつぶしてください', 'info');
+            } else if (rectangleMode.checked) {
+                isRectangleMode = true;
+                showToast('矩形描画モードに切り替えました: ドラッグして矩形の枠線を描画してください', 'info');
+            } else if (filledRectangleMode.checked) {
+                isFilledRectangleMode = true;
+                showToast('塗りつぶし矩形モードに切り替えました: ドラッグして矩形を塗りつぶしてください', 'info');
             }
         }
 
@@ -472,6 +506,97 @@
 
         document.getElementById('grid_type').onchange = function () {
             currentTerrain = this.value;
+        }
+
+        // 矩形描画関数
+        function drawRectangle() {
+            if (rectangleStartX === null || rectangleStartY === null) return;
+            
+            saveState();
+            
+            const minX = Math.min(rectangleStartX, rectangleEndX);
+            const maxX = Math.max(rectangleStartX, rectangleEndX);
+            const minY = Math.min(rectangleStartY, rectangleEndY);
+            const maxY = Math.max(rectangleStartY, rectangleEndY);
+            
+            if (isFilledRectangleMode) {
+                // 塗りつぶし矩形
+                for (let x = minX; x <= maxX; x++) {
+                    for (let y = minY; y <= maxY; y++) {
+                        if (x < mapWidth && y < mapHeight) {
+                            grid[x][y] = currentTerrain;
+                        }
+                    }
+                }
+                showToast(`塗りつぶし矩形を描画しました (${maxX - minX + 1}×${maxY - minY + 1})`, 'success');
+            } else {
+                // 矩形の枠線のみ
+                for (let x = minX; x <= maxX; x++) {
+                    if (x < mapWidth) {
+                        if (minY < mapHeight) grid[x][minY] = currentTerrain; // 上辺
+                        if (maxY < mapHeight) grid[x][maxY] = currentTerrain; // 下辺
+                    }
+                }
+                for (let y = minY; y <= maxY; y++) {
+                    if (y < mapHeight) {
+                        if (minX < mapWidth) grid[minX][y] = currentTerrain; // 左辺
+                        if (maxX < mapWidth) grid[maxX][y] = currentTerrain; // 右辺
+                    }
+                }
+                showToast(`矩形の枠線を描画しました (${maxX - minX + 1}×${maxY - minY + 1})`, 'success');
+            }
+            
+            update_texts();
+            drawGrid();
+        }
+        
+        // プレビュー矩形を描画する関数
+        function drawPreviewRectangle() {
+            if (rectangleStartX === null || rectangleStartY === null) return;
+            
+            // 現在のグリッドを再描画してプレビューをクリア
+            drawGrid();
+            
+            // プレビュー矩形を描画
+            const stage = document.getElementById('tiles').querySelector('canvas').getContext('2d');
+            if (!stage) return;
+            
+            const minX = Math.min(rectangleStartX, rectangleEndX);
+            const maxX = Math.max(rectangleStartX, rectangleEndX);
+            const minY = Math.min(rectangleStartY, rectangleEndY);
+            const maxY = Math.max(rectangleStartY, rectangleEndY);
+            
+            // プレビュー用の半透明色
+            const canvas = document.getElementById('tiles').querySelector('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            if (isFilledRectangleMode) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                ctx.fillRect(
+                    minX * gridSize,
+                    minY * gridSize,
+                    (maxX - minX + 1) * gridSize,
+                    (maxY - minY + 1) * gridSize
+                );
+            }
+            
+            ctx.strokeRect(
+                minX * gridSize,
+                minY * gridSize,
+                (maxX - minX + 1) * gridSize,
+                (maxY - minY + 1) * gridSize
+            );
+            
+            ctx.restore();
+        }
+        
+        // プレビューをクリアする関数
+        function clearPreview() {
+            drawGrid();
         }
 
         // グリッドサイズとマップサイズ
@@ -555,6 +680,15 @@
                             if (filled) {
                                 showToast(`地形 "${grid[i][j]}" を "${currentTerrain}" で塗りつぶしました`, 'success');
                             }
+                        } else if (isRectangleMode || isFilledRectangleMode) {
+                            // 矩形描画モードの場合
+                            if (!isDrawingRectangle) {
+                                isDrawingRectangle = true;
+                                rectangleStartX = i;
+                                rectangleStartY = j;
+                                rectangleEndX = i;
+                                rectangleEndY = j;
+                            }
                         } else {
                             // 通常モードの場合
                             saveState();
@@ -575,7 +709,14 @@
                     });
 
                     gridUpdate = function () {
-                        if (mouseDown && !isFloodFillMode) {
+                        if (isRectangleMode || isFilledRectangleMode) {
+                            // 矩形描画モードの場合
+                            if (isDrawingRectangle) {
+                                rectangleEndX = i;
+                                rectangleEndY = j;
+                                drawPreviewRectangle();
+                            }
+                        } else if (mouseDown && !isFloodFillMode) {
                             grid[i][j] = currentTerrain;
                             this.fill(grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
                             konva_text[i][j].text(grid[i][j]);
@@ -596,6 +737,15 @@
                 }
             }
             layer.draw();
+            
+            // 矩形描画用のステージイベントハンドラー
+            stage.on('mouseup', function() {
+                if ((isRectangleMode || isFilledRectangleMode) && isDrawingRectangle) {
+                    isDrawingRectangle = false;
+                    drawRectangle();
+                    clearPreview();
+                }
+            });
         }
         window.onload = function () {
             loadTerrainDefinitions();
@@ -1312,6 +1462,20 @@
                 e.preventDefault();
                 const normalMode = document.getElementById('normalMode');
                 normalMode.checked = true;
+                setDrawingMode();
+            }
+            // Rキーで矩形描画モード切り替え
+            else if ((e.key === 'r' || e.key === 'R') && !e.shiftKey) {
+                e.preventDefault();
+                const rectangleMode = document.getElementById('rectangleMode');
+                rectangleMode.checked = true;
+                setDrawingMode();
+            }
+            // Shift+Rで塗りつぶし矩形モード切り替え
+            else if ((e.key === 'r' || e.key === 'R') && e.shiftKey) {
+                e.preventDefault();
+                const filledRectangleMode = document.getElementById('filledRectangleMode');
+                filledRectangleMode.checked = true;
                 setDrawingMode();
             }
         });
