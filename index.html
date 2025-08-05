@@ -614,7 +614,7 @@
 
         // 円形・楕円描画関数
         function drawCircle() {
-            if (circleStartX === null || circleStartY === null) return;
+            if (circleStartX === -1 || circleStartY === -1) return;
 
             // プレビューをクリア
             clearPreview();
