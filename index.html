@@ -167,25 +167,29 @@
         </div>
         <div class="me-2">
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="drawingMode" id="normalMode" value="normal" checked onchange="setDrawingMode()">
+                <input class="form-check-input" type="radio" name="drawingMode" id="normalMode" value="normal" checked
+                    onchange="setDrawingMode()">
                 <label class="form-check-label text-white" for="normalMode" title="通常の単一セル描画モード (Dキー)">
                     <i class="bi bi-pencil"></i> 通常描画
                 </label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="drawingMode" id="floodFillMode" value="floodFill" onchange="setDrawingMode()">
+                <input class="form-check-input" type="radio" name="drawingMode" id="floodFillMode" value="floodFill"
+                    onchange="setDrawingMode()">
                 <label class="form-check-label text-white" for="floodFillMode" title="同じ地形の連続領域を一括で塗りつぶし (Fキー)">
                     <i class="bi bi-paint-bucket"></i> 塗りつぶし
                 </label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="drawingMode" id="rectangleMode" value="rectangle" onchange="setDrawingMode()">
+                <input class="form-check-input" type="radio" name="drawingMode" id="rectangleMode" value="rectangle"
+                    onchange="setDrawingMode()">
                 <label class="form-check-label text-white" for="rectangleMode" title="矩形の枠線を描画 (Rキー)">
                     <i class="bi bi-square"></i> 矩形
                 </label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="drawingMode" id="filledRectangleMode" value="filledRectangle" onchange="setDrawingMode()">
+                <input class="form-check-input" type="radio" name="drawingMode" id="filledRectangleMode"
+                    value="filledRectangle" onchange="setDrawingMode()">
                 <label class="form-check-label text-white" for="filledRectangleMode" title="矩形を塗りつぶして描画 (Shift+Rキー)">
                     <i class="bi bi-square-fill"></i> 塗りつぶし矩形
                 </label>
@@ -446,18 +450,32 @@
         let rectangleEndY = -1;
         let previewRectangle = null;
 
+        // Konvaのグローバル変数
+        let globalStage = null;
+        let globalLayer = null;
+
         // 描画モードの設定（ラジオボタン用）
         function setDrawingMode() {
             const normalMode = document.getElementById('normalMode');
             const floodFillMode = document.getElementById('floodFillMode');
             const rectangleMode = document.getElementById('rectangleMode');
             const filledRectangleMode = document.getElementById('filledRectangleMode');
-            
+
+            // プレビューをクリア
+            clearPreview();
+
+            // 矩形描画状態をリセット
+            isDrawingRectangle = false;
+            rectangleStartX = -1;
+            rectangleStartY = -1;
+            rectangleEndX = -1;
+            rectangleEndY = -1;
+
             // 全てのモードをリセット
             isFloodFillMode = false;
             isRectangleMode = false;
             isFilledRectangleMode = false;
-            
+
             if (normalMode.checked) {
                 showToast('通常描画モードに切り替えました', 'info');
             } else if (floodFillMode.checked) {
@@ -476,14 +494,14 @@
         function toggleFloodFillMode() {
             const normalMode = document.getElementById('normalMode');
             const floodFillMode = document.getElementById('floodFillMode');
-            
+
             if (isFloodFillMode) {
                 normalMode.checked = true;
             } else {
                 floodFillMode.checked = true;
             }
             setDrawingMode();
-        }        let mouseDown = false
+        } let mouseDown = false
         let currentTerrain = ".";
 
         if (touchmode) {
@@ -511,14 +529,17 @@
         // 矩形描画関数
         function drawRectangle() {
             if (rectangleStartX === null || rectangleStartY === null) return;
-            
+
+            // プレビューをクリア
+            clearPreview();
+
             saveState();
-            
+
             const minX = Math.min(rectangleStartX, rectangleEndX);
             const maxX = Math.max(rectangleStartX, rectangleEndX);
             const minY = Math.min(rectangleStartY, rectangleEndY);
             const maxY = Math.max(rectangleStartY, rectangleEndY);
-            
+
             if (isFilledRectangleMode) {
                 // 塗りつぶし矩形
                 for (let x = minX; x <= maxX; x++) {
@@ -545,58 +566,109 @@
                 }
                 showToast(`矩形の枠線を描画しました (${maxX - minX + 1}×${maxY - minY + 1})`, 'success');
             }
-            
+
             update_texts();
             drawGrid();
         }
-        
+
         // プレビュー矩形を描画する関数
         function drawPreviewRectangle() {
-            if (rectangleStartX === null || rectangleStartY === null) return;
-            
-            // 現在のグリッドを再描画してプレビューをクリア
-            drawGrid();
-            
-            // プレビュー矩形を描画
-            const stage = document.getElementById('tiles').querySelector('canvas').getContext('2d');
-            if (!stage) return;
+            if (rectangleStartX === null || rectangleStartY === null || !globalStage || !globalLayer) return;
             
             const minX = Math.min(rectangleStartX, rectangleEndX);
             const maxX = Math.max(rectangleStartX, rectangleEndX);
             const minY = Math.min(rectangleStartY, rectangleEndY);
             const maxY = Math.max(rectangleStartY, rectangleEndY);
             
-            // プレビュー用の半透明色
-            const canvas = document.getElementById('tiles').querySelector('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.save();
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            
-            if (isFilledRectangleMode) {
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-                ctx.fillRect(
-                    minX * gridSize,
-                    minY * gridSize,
-                    (maxX - minX + 1) * gridSize,
-                    (maxY - minY + 1) * gridSize
-                );
+            // 既存のプレビュー要素を削除
+            const existingPreview = globalLayer.findOne('.preview-rectangle');
+            if (existingPreview) {
+                existingPreview.destroy();
             }
             
-            ctx.strokeRect(
-                minX * gridSize,
-                minY * gridSize,
-                (maxX - minX + 1) * gridSize,
-                (maxY - minY + 1) * gridSize
-            );
+            // プレビューグループを作成
+            const previewGroup = new Konva.Group({
+                name: 'preview-rectangle'
+            });
             
-            ctx.restore();
-        }
+            // 範囲内の各セルを色反転で表示
+            for (let x = minX; x <= maxX; x++) {
+                for (let y = minY; y <= maxY; y++) {
+                    if (x < mapWidth && y < mapHeight) {
+                        // 色反転エフェクト用の矩形
+                        const invertRect = new Konva.Rect({
+                            x: x * gridSize,
+                            y: y * gridSize,
+                            width: gridSize,
+                            height: gridSize,
+                            fill: '#ffffff',
+                            opacity: 0.4,
+                            globalCompositeOperation: 'difference'
+                        });
+                        previewGroup.add(invertRect);
+                        
+                        // 塗りつぶしモードの場合は追加の色付けエフェクト
+                        if (isFilledRectangleMode) {
+                            const fillPreview = new Konva.Rect({
+                                x: x * gridSize,
+                                y: y * gridSize,
+                                width: gridSize,
+                                height: gridSize,
+                                fill: '#ffff00', // 黄色でプレビュー
+                                opacity: 0.3
+                            });
+                            previewGroup.add(fillPreview);
+                        }
+                        
+                        // 境界線の描画
+                        const shouldDrawBorder = 
+                            (isFilledRectangleMode) || 
+                            (x === minX || x === maxX || y === minY || y === maxY);
+                        
+                        if (shouldDrawBorder) {
+                            const borderRect = new Konva.Rect({
+                                x: x * gridSize,
+                                y: y * gridSize,
+                                width: gridSize,
+                                height: gridSize,
+                                stroke: isFilledRectangleMode ? '#ff6600' : '#ff0000', // 塗りつぶしはオレンジ、枠線は赤
+                                strokeWidth: 2,
+                                fill: 'transparent'
+                            });
+                            previewGroup.add(borderRect);
+                        }
+                    }
+                }
+            }
+            
+            // 点線の外枠を追加（塗りつぶしモードは太い線）
+            const dashedBorder = new Konva.Rect({
+                x: minX * gridSize - 1,
+                y: minY * gridSize - 1,
+                width: (maxX - minX + 1) * gridSize + 2,
+                height: (maxY - minY + 1) * gridSize + 2,
+                stroke: isFilledRectangleMode ? '#ff6600' : '#ff4444', // 塗りつぶしはオレンジ、枠線は赤
+                strokeWidth: isFilledRectangleMode ? 4 : 3, // 塗りつぶしは太い線
+                dash: isFilledRectangleMode ? [6, 3] : [8, 4], // 塗りつぶしは短い点線
+                fill: 'transparent'
+            });
+            previewGroup.add(dashedBorder);
+            
+            // プレビューをレイヤーに追加
+            globalLayer.add(previewGroup);
+            globalLayer.draw();
+        }        
         
         // プレビューをクリアする関数
         function clearPreview() {
-            drawGrid();
+            if (!globalLayer) return;
+            
+            // プレビュー要素を削除
+            const existingPreview = globalLayer.findOne('.preview-rectangle');
+            if (existingPreview) {
+                existingPreview.destroy();
+                globalLayer.draw();
+            }
         }
 
         // グリッドサイズとマップサイズ
@@ -652,15 +724,19 @@
 
         // グリッドを描画する関数
         function drawGrid() {
-            const stage = new Konva.Stage({
+            // 既存のステージをクリア
+            const tilesContainer = document.getElementById('tiles');
+            tilesContainer.innerHTML = '';
+            
+            globalStage = new Konva.Stage({
                 container: 'tiles',
                 width: gridSize * mapWidth,
                 height: gridSize * mapHeight
             });
 
-            const layer = new Konva.Layer();
+            globalLayer = new Konva.Layer();
             konva_text = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
-            stage.add(layer);
+            globalStage.add(globalLayer);
             for (let i = 0; i < mapWidth; i++) {
                 for (let j = 0; j < mapHeight; j++) {
                     const rect = new Konva.Rect({
@@ -716,12 +792,17 @@
                                 rectangleEndY = j;
                                 drawPreviewRectangle();
                             }
-                        } else if (mouseDown && !isFloodFillMode) {
-                            grid[i][j] = currentTerrain;
-                            this.fill(grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
-                            konva_text[i][j].text(grid[i][j]);
-                            layer.draw();
-                            update_texts();
+                        } else {
+                            // 矩形描画モード以外の場合はプレビューをクリア
+                            clearPreview();
+
+                            if (mouseDown && !isFloodFillMode) {
+                                grid[i][j] = currentTerrain;
+                                this.fill(grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
+                                konva_text[i][j].text(grid[i][j]);
+                                globalLayer.draw();
+                                update_texts();
+                            }
                         }
                     };
 
@@ -732,14 +813,14 @@
                         rect.on('mousemove', gridUpdate);
                     }
 
-                    layer.add(rect);
-                    layer.add(konva_text[i][j]);
+                    globalLayer.add(rect);
+                    globalLayer.add(konva_text[i][j]);
                 }
             }
-            layer.draw();
-            
+            globalLayer.draw();
+
             // 矩形描画用のステージイベントハンドラー
-            stage.on('mouseup', function() {
+            globalStage.on('mouseup', function () {
                 if ((isRectangleMode || isFilledRectangleMode) && isDrawingRectangle) {
                     isDrawingRectangle = false;
                     drawRectangle();
