@@ -569,7 +569,7 @@
 
         // 矩形描画関数
         function drawRectangle() {
-            if (rectangleStartX === null || rectangleStartY === null) return;
+            if (rectangleStartX === -1 || rectangleStartY === -1) return;
 
             // プレビューをクリア
             clearPreview();
