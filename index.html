@@ -165,10 +165,20 @@
                 <i class="bi bi-arrow-clockwise"></i> リドゥ
             </button>
         </div>
-        <button id="flood-fill-btn" onclick="toggleFloodFillMode()" class="btn btn-outline-info me-2"
-            title="同じ地形の連続領域を一括で塗りつぶします (Fキー)">
-            <i class="bi bi-paint-bucket"></i> 塗りつぶし
-        </button>
+        <div class="me-2">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="drawingMode" id="normalMode" value="normal" checked onchange="setDrawingMode()">
+                <label class="form-check-label text-white" for="normalMode" title="通常の単一セル描画モード (Dキー)">
+                    <i class="bi bi-pencil"></i> 通常描画
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="drawingMode" id="floodFillMode" value="floodFill" onchange="setDrawingMode()">
+                <label class="form-check-label text-white" for="floodFillMode" title="同じ地形の連続領域を一括で塗りつぶし (Fキー)">
+                    <i class="bi bi-paint-bucket"></i> 塗りつぶし
+                </label>
+            </div>
+        </div>
         <div id="change_tile_size">
             <label for="tile_size" style="color:white;">タイルサイズ:</label>
             <input type="number" id="tile_size" value="24" min="1" max="100" step="1" onchange="updateTileSize()">
@@ -414,25 +424,32 @@
         // フラッドフィルモードの状態管理
         let isFloodFillMode = false;
 
-        // フラッドフィルモードの切り替え
-        function toggleFloodFillMode() {
-            isFloodFillMode = !isFloodFillMode;
-            const button = document.getElementById('flood-fill-btn');
-
-            if (isFloodFillMode) {
-                button.classList.remove('btn-outline-info');
-                button.classList.add('btn-info');
-                button.innerHTML = '<i class="bi bi-paint-bucket"></i> 塗りつぶし中';
-                showToast('塗りつぶしモードON: 地形をクリックして塗りつぶしてください', 'info');
-            } else {
-                button.classList.remove('btn-info');
-                button.classList.add('btn-outline-info');
-                button.innerHTML = '<i class="bi bi-paint-bucket"></i> 塗りつぶし';
-                showToast('塗りつぶしモードOFF', 'info');
+        // 描画モードの設定（ラジオボタン用）
+        function setDrawingMode() {
+            const normalMode = document.getElementById('normalMode');
+            const floodFillMode = document.getElementById('floodFillMode');
+            
+            if (normalMode.checked) {
+                isFloodFillMode = false;
+                showToast('通常描画モードに切り替えました', 'info');
+            } else if (floodFillMode.checked) {
+                isFloodFillMode = true;
+                showToast('塗りつぶしモードに切り替えました: 地形をクリックして塗りつぶしてください', 'info');
             }
         }
 
-        let mouseDown = false
+        // 旧関数（後方互換性のため残す）
+        function toggleFloodFillMode() {
+            const normalMode = document.getElementById('normalMode');
+            const floodFillMode = document.getElementById('floodFillMode');
+            
+            if (isFloodFillMode) {
+                normalMode.checked = true;
+            } else {
+                floodFillMode.checked = true;
+            }
+            setDrawingMode();
+        }        let mouseDown = false
         let currentTerrain = ".";
 
         if (touchmode) {
@@ -1286,7 +1303,16 @@
             // Fキーでフラッドフィルモード切り替え
             else if (e.key === 'f' || e.key === 'F') {
                 e.preventDefault();
-                toggleFloodFillMode();
+                const floodFillMode = document.getElementById('floodFillMode');
+                floodFillMode.checked = true;
+                setDrawingMode();
+            }
+            // Dキーで通常描画モード切り替え
+            else if (e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                const normalMode = document.getElementById('normalMode');
+                normalMode.checked = true;
+                setDrawingMode();
             }
         });
 
