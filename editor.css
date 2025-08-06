@@ -35,8 +35,8 @@ canvas {
 
 #version {
     position: absolute;
-    font-size: 0.6rem;
-    top: 0;
+    font-size: 0.9rem;
+    bottom: 0;
     right: 0;
     padding: 0.3rem;
     color: wheat;

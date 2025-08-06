@@ -98,7 +98,7 @@
 
         /* カードの高さを画面サイズに合わせて調整 */
         .card-container {
-            min-height: calc(100vh - 200px);
+            min-height: calc(100vh - 120px);
         }
 
         @media (max-width: 768px) {
@@ -145,6 +145,7 @@
         .overflow-auto::-webkit-scrollbar-thumb:hover {
             background: #6a6a6a;
         }
+
     </style>
 
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -160,21 +161,11 @@
 </head>
 
 <body class="bg-dark text-light">
-    <!-- Navigation Header -->
-    <nav class="navbar navbar-dark bg-primary shadow-sm mb-3">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">
-                <i class="bi bi-map"></i> Vault Editor
-            </span>
-            <div class="d-flex">
-                <div id="toggle" class="me-2"></div>
-                <div id="version"></div>
-            </div>
-        </div>
-    </nav>
+    <!-- App Header - Fixed Top Right -->
+    <div id="version"></div>
 
     <!-- Main Container -->
-    <div class="container-fluid">
+    <div class="container-fluid pt-2">
         <div class="row g-3">
             <!-- Left Sidebar - Controls -->
             <div class="col-lg-3 col-md-4 col-12 order-2 order-md-1">
@@ -2500,30 +2491,6 @@
         drawGrid();
         update_texts();
     }
-
-    function ToggleButton() {
-        const [isOn, setIsOn] = React.useState(false);
-
-        const toggleButton = () => {
-            if (isOn) {
-                document.getElementById('editor').style.display = 'flex';
-            }
-            else {
-                document.getElementById('editor').style.display = 'none';
-            }
-            setIsOn(!isOn);
-        };
-
-        return (
-            <button onClick={toggleButton} type="button" id="toggle-button">
-                {isOn ? '>>' : '<<'}
-            </button>
-        );
-    }
-
-    // ReactDOMを使ってコンポーネントをレンダリング
-    ReactDOM.render(<ToggleButton />, document.getElementById('toggle'));
-
 
     // Rendering the App component to the DOM
     ReactDOM.createRoot(document.getElementById('version')).render(<App />);
