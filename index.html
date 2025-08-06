@@ -169,7 +169,7 @@
         <div class="row g-3">
             <!-- Left Sidebar - Controls -->
             <div class="col-lg-3 col-md-4 col-12 order-2 order-md-1">
-                <div class="card bg-secondary card-container">
+                <div class="card bg-secondary card-container" style="flex: 0 0 auto;">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
                             <i class="bi bi-gear"></i> 設定
@@ -177,40 +177,42 @@
                     </div>
                     <div class="card-body overflow-auto">
                         <!-- Vault Parameters -->
-                        <div class="mb-4">
-                            <h6 class="text-warning mb-3">基本設定</h6>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label small">部屋ID</label>
+                        <div class="mb-3">
+                            <h6 class="text-warning mb-2">基本設定</h6>
+                            <div class="row g-1 mb-2">
+                                <div class="col-3">
+                                    <label class="form-label small">ID</label>
                                     <input type="number" class="form-control form-control-sm" id="vault-id"
                                         name="vault-id" min="0" value="0">
                                 </div>
-                                <div class="col-6">
-                                    <label class="form-label small">種別ID</label>
+                                <div class="col-3">
+                                    <label class="form-label small">種別</label>
                                     <input type="number" class="form-control form-control-sm" id="vault-type"
                                         name="vault-type" min="0" value="18">
                                 </div>
-                                <div class="col-6">
+                                <div class="col-3">
                                     <label class="form-label small">幅</label>
                                     <input type="number" class="form-control form-control-sm" id="vault-width"
                                         name="vault-width" min="3" max="240" value="14">
                                 </div>
-                                <div class="col-6">
+                                <div class="col-3">
                                     <label class="form-label small">高さ</label>
                                     <input type="number" class="form-control form-control-sm" id="vault-height"
                                         name="vault-height" min="3" max="240" value="14">
                                 </div>
+                            </div>
+                            <div class="row g-1">
                                 <div class="col-12">
                                     <label class="form-label small">名前</label>
                                     <input type="text" class="form-control form-control-sm" id="vault-name"
-                                        name="vault-name" value="">
+                                        name="vault-name" value="" placeholder="部屋名">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Terrain Selection -->
-                        <div class="mb-4">
-                            <h6 class="text-warning mb-3">地形選択</h6>
+                        <div class="mb-3">
+                            <h6 class="text-warning mb-2">地形選択</h6>
                             <select id="grid_type" class="form-select form-select-sm">
                                 <option value=".">. - Floor</option>
                                 <option value=" ">SPACE - None</option>
@@ -250,21 +252,25 @@
                         </div>
 
                         <!-- Custom Terrain -->
-                        <div class="mb-4">
-                            <h6 class="text-warning mb-3">カスタム地形</h6>
-                            <div class="d-grid gap-2">
-                                <button onclick="openDialog()" class="btn btn-warning btn-sm">
-                                    <i class="bi bi-plus-circle"></i> 新規地形定義
-                                </button>
-                                <button onclick="openDeleteDialog()" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash"></i> カスタム地形削除
-                                </button>
+                        <div class="mb-3">
+                            <h6 class="text-warning mb-2">カスタム地形</h6>
+                            <div class="row g-1">
+                                <div class="col-6">
+                                    <button onclick="openDialog()" class="btn btn-warning btn-sm w-100">
+                                        <i class="bi bi-plus-circle"></i> 新規
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button onclick="openDeleteDialog()" class="btn btn-danger btn-sm w-100">
+                                        <i class="bi bi-trash"></i> 削除
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Undo/Redo -->
-                        <div class="mb-4">
-                            <h6 class="text-warning mb-3">編集</h6>
+                        <div class="mb-3">
+                            <h6 class="text-warning mb-2">編集</h6>
                             <div class="btn-group w-100" role="group">
                                 <button onclick="undo()" class="btn btn-outline-light btn-sm" title="元に戻す (Ctrl+Z)">
                                     <i class="bi bi-arrow-counterclockwise"></i> アンドゥ
@@ -276,77 +282,56 @@
                         </div>
 
                         <!-- Drawing Modes -->
-                        <div class="mb-4">
-                            <h6 class="text-warning mb-3">描画モード</h6>
-                            <div class="row g-1">
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="drawingMode" id="normalMode"
-                                            value="normal" checked onchange="setDrawingMode()">
-                                        <label class="form-check-label small" for="normalMode" title="通常の単一セル描画モード">
-                                            <i class="bi bi-pencil"></i> 通常描画 <span class="keyboard-shortcut">(D)</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="drawingMode"
-                                            id="floodFillMode" value="floodFill" onchange="setDrawingMode()">
-                                        <label class="form-check-label small" for="floodFillMode"
-                                            title="同じ地形の連続領域を一括で塗りつぶし">
-                                            <i class="bi bi-paint-bucket"></i> 塗りつぶし <span
-                                                class="keyboard-shortcut">(F)</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="drawingMode"
-                                            id="rectangleMode" value="rectangle" onchange="setDrawingMode()">
-                                        <label class="form-check-label small" for="rectangleMode" title="矩形の枠線を描画">
-                                            <i class="bi bi-square"></i> 矩形 <span class="keyboard-shortcut">(R)</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="drawingMode"
-                                            id="filledRectangleMode" value="filledRectangle"
-                                            onchange="setDrawingMode()">
-                                        <label class="form-check-label small" for="filledRectangleMode"
-                                            title="矩形を塗りつぶして描画">
-                                            <i class="bi bi-square-fill"></i> 塗りつぶし矩形 <span
-                                                class="keyboard-shortcut">(Shift+R)</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="drawingMode" id="circleMode"
-                                            value="circle" onchange="setDrawingMode()">
-                                        <label class="form-check-label small" for="circleMode" title="円形・楕円の枠線を描画">
-                                            <i class="bi bi-circle"></i> 円形・楕円 <span
-                                                class="keyboard-shortcut">(C)</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="drawingMode"
-                                            id="filledCircleMode" value="filledCircle" onchange="setDrawingMode()">
-                                        <label class="form-check-label small" for="filledCircleMode"
-                                            title="円形・楕円を塗りつぶして描画">
-                                            <i class="bi bi-circle-fill"></i> 塗りつぶし円形・楕円 <span
-                                                class="keyboard-shortcut">(Shift+C)</span>
-                                        </label>
-                                    </div>
-                                </div>
+                        <div class="mb-3">
+                            <h6 class="text-warning mb-2">描画モード</h6>
+                            <div class="btn-group w-100" role="group" aria-label="描画モード選択">
+                                <input type="radio" class="btn-check" name="drawingMode" id="normalMode"
+                                    value="normal" checked onchange="setDrawingMode()" autocomplete="off">
+                                <label class="btn btn-outline-light btn-sm" for="normalMode" title="通常の単一セル描画モード (D)">
+                                    <i class="bi bi-pencil"></i>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="drawingMode" id="floodFillMode"
+                                    value="floodFill" onchange="setDrawingMode()" autocomplete="off">
+                                <label class="btn btn-outline-light btn-sm" for="floodFillMode" title="同じ地形の連続領域を一括で塗りつぶし (F)">
+                                    <i class="bi bi-paint-bucket"></i>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="drawingMode" id="rectangleMode"
+                                    value="rectangle" onchange="setDrawingMode()" autocomplete="off">
+                                <label class="btn btn-outline-light btn-sm" for="rectangleMode" title="矩形の枠線を描画 (R)">
+                                    <i class="bi bi-square"></i>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="drawingMode" id="filledRectangleMode"
+                                    value="filledRectangle" onchange="setDrawingMode()" autocomplete="off">
+                                <label class="btn btn-outline-light btn-sm" for="filledRectangleMode" title="矩形を塗りつぶして描画 (Shift+R)">
+                                    <i class="bi bi-square-fill"></i>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="drawingMode" id="circleMode"
+                                    value="circle" onchange="setDrawingMode()" autocomplete="off">
+                                <label class="btn btn-outline-light btn-sm" for="circleMode" title="円形・楕円の枠線を描画 (C)">
+                                    <i class="bi bi-circle"></i>
+                                </label>
+
+                                <input type="radio" class="btn-check" name="drawingMode" id="filledCircleMode"
+                                    value="filledCircle" onchange="setDrawingMode()" autocomplete="off">
+                                <label class="btn btn-outline-light btn-sm" for="filledCircleMode" title="円形・楕円を塗りつぶして描画 (Shift+C)">
+                                    <i class="bi bi-circle-fill"></i>
+                                </label>
                             </div>
+                        </div>
+
+                        <!-- Slide Keys Controls -->
+                        <div class="mb-3">
+                            <h6 class="text-warning mb-2">操作</h6>
+                            <div id="slide_keys"></div>
                         </div>
 
                         <!-- Tile Size -->
                         <div class="mb-3">
-                            <h6 class="text-warning mb-3">表示設定</h6>
+                            <h6 class="text-warning mb-2">表示設定</h6>
                             <label for="tile_size" class="form-label small">タイルサイズ</label>
                             <input type="number" class="form-control form-control-sm" id="tile_size" value="24" min="1"
                                 max="100" step="1" onchange="updateTileSize()">
@@ -2298,70 +2283,59 @@
 
     function SlideKeys() {
         return (
-            <div className="container-fluid">
-                <div className="row mb-2">
-                    <div className="col-12 text-center">
-                        <div className="btn-group" role="group" aria-label="スライド操作">
-                            <button className="btn btn-outline-primary btn-sm" onClick={SlideUp} title="上にスライド">
-                                <i className="bi bi-arrow-up"></i>
-                            </button>
-                            <button className="btn btn-outline-primary btn-sm" onClick={SlideDown} title="下にスライド">
-                                <i className="bi bi-arrow-down"></i>
-                            </button>
-                            <button className="btn btn-outline-primary btn-sm" onClick={SlideLeft} title="左にスライド">
-                                <i className="bi bi-arrow-left"></i>
-                            </button>
-                            <button className="btn btn-outline-primary btn-sm" onClick={SlideRight} title="右にスライド">
-                                <i className="bi bi-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
+            <div className="d-flex flex-wrap gap-1">
+                {/* スライド操作 */}
+                <div className="btn-group" role="group" aria-label="スライド操作">
+                    <button className="btn btn-outline-primary btn-sm" onClick={SlideUp} title="上にスライド">
+                        <i className="bi bi-arrow-up"></i>
+                    </button>
+                    <button className="btn btn-outline-primary btn-sm" onClick={SlideDown} title="下にスライド">
+                        <i className="bi bi-arrow-down"></i>
+                    </button>
+                    <button className="btn btn-outline-primary btn-sm" onClick={SlideLeft} title="左にスライド">
+                        <i className="bi bi-arrow-left"></i>
+                    </button>
+                    <button className="btn btn-outline-primary btn-sm" onClick={SlideRight} title="右にスライド">
+                        <i className="bi bi-arrow-right"></i>
+                    </button>
                 </div>
-                <div className="row mb-2">
-                    <div className="col-12 text-center">
-                        <div className="btn-group" role="group" aria-label="回転操作">
-                            <button className="btn btn-outline-success btn-sm" onClick={RotateLeft} title="左回転">
-                                <i className="bi bi-arrow-counterclockwise"></i>
-                            </button>
-                            <button className="btn btn-outline-success btn-sm" onClick={RotateRight} title="右回転">
-                                <i className="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </div>
-                    </div>
+                
+                {/* 回転操作 */}
+                <div className="btn-group" role="group" aria-label="回転操作">
+                    <button className="btn btn-outline-success btn-sm" onClick={RotateLeft} title="左回転">
+                        <i className="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                    <button className="btn btn-outline-success btn-sm" onClick={RotateRight} title="右回転">
+                        <i className="bi bi-arrow-clockwise"></i>
+                    </button>
                 </div>
-                <div className="row mb-2">
-                    <div className="col-12 text-center">
-                        <div className="btn-group" role="group" aria-label="反転操作">
-                            <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridLeftRight} title="左右反転">
-                                <i className="bi bi-arrow-left-right"></i>
-                            </button>
-                            <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridUpDown} title="上下反転">
-                                <i className="bi bi-arrow-down-up"></i>
-                            </button>
-                        </div>
-                    </div>
+                
+                {/* 反転操作 */}
+                <div className="btn-group" role="group" aria-label="反転操作">
+                    <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridLeftRight} title="左右反転">
+                        <i className="bi bi-arrow-left-right"></i>
+                    </button>
+                    <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridUpDown} title="上下反転">
+                        <i className="bi bi-arrow-down-up"></i>
+                    </button>
                 </div>
-                <div className="row mb-2">
-                    <div className="col-12 text-center">
-                        <button className="btn btn-outline-info btn-sm" onClick={CoatingOutsideVault} title="外周に%を配置">
-                            <i className="bi bi-percent"></i>
-                        </button>
-                    </div>
-                </div>
-                <div className="row mb-2">
-                    <div className="col-12 text-center">
-                        <div className="btn-group" role="group" aria-label="ミラー操作">
-                            <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridLeftToRight} title="左から右へミラー">
-                                <i className="bi bi-chevron-double-right"></i>
-                            </button>
-                            <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridTopToBottom} title="上から下へミラー">
-                                <i className="bi bi-chevron-double-down"></i>
-                            </button>
-                            <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridDiagonal} title="対角線ミラー">
-                                <i className="bi bi-slash-lg"></i>
-                            </button>
-                        </div>
-                    </div>
+                
+                {/* 外周コーティング */}
+                <button className="btn btn-outline-info btn-sm" onClick={CoatingOutsideVault} title="外周に%を配置">
+                    <i className="bi bi-percent"></i>
+                </button>
+                
+                {/* ミラー操作 */}
+                <div className="btn-group" role="group" aria-label="ミラー操作">
+                    <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridLeftToRight} title="左から右へミラー">
+                        <i className="bi bi-chevron-double-right"></i>
+                    </button>
+                    <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridTopToBottom} title="上から下へミラー">
+                        <i className="bi bi-chevron-double-down"></i>
+                    </button>
+                    <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridDiagonal} title="対角線ミラー">
+                        <i className="bi bi-slash-lg"></i>
+                    </button>
                 </div>
             </div>
         );
