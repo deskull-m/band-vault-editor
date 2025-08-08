@@ -145,7 +145,6 @@
         .overflow-auto::-webkit-scrollbar-thumb:hover {
             background: #6a6a6a;
         }
-
     </style>
 
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -285,15 +284,16 @@
                         <div class="mb-3">
                             <h6 class="text-warning mb-2">描画モード</h6>
                             <div class="btn-group w-100" role="group" aria-label="描画モード選択">
-                                <input type="radio" class="btn-check" name="drawingMode" id="normalMode"
-                                    value="normal" checked onchange="setDrawingMode()" autocomplete="off">
+                                <input type="radio" class="btn-check" name="drawingMode" id="normalMode" value="normal"
+                                    checked onchange="setDrawingMode()" autocomplete="off">
                                 <label class="btn btn-outline-light btn-sm" for="normalMode" title="通常の単一セル描画モード (D)">
                                     <i class="bi bi-pencil"></i>
                                 </label>
 
                                 <input type="radio" class="btn-check" name="drawingMode" id="floodFillMode"
                                     value="floodFill" onchange="setDrawingMode()" autocomplete="off">
-                                <label class="btn btn-outline-light btn-sm" for="floodFillMode" title="同じ地形の連続領域を一括で塗りつぶし (F)">
+                                <label class="btn btn-outline-light btn-sm" for="floodFillMode"
+                                    title="同じ地形の連続領域を一括で塗りつぶし (F)">
                                     <i class="bi bi-paint-bucket"></i>
                                 </label>
 
@@ -305,19 +305,21 @@
 
                                 <input type="radio" class="btn-check" name="drawingMode" id="filledRectangleMode"
                                     value="filledRectangle" onchange="setDrawingMode()" autocomplete="off">
-                                <label class="btn btn-outline-light btn-sm" for="filledRectangleMode" title="矩形を塗りつぶして描画 (Shift+R)">
+                                <label class="btn btn-outline-light btn-sm" for="filledRectangleMode"
+                                    title="矩形を塗りつぶして描画 (Shift+R)">
                                     <i class="bi bi-square-fill"></i>
                                 </label>
 
-                                <input type="radio" class="btn-check" name="drawingMode" id="circleMode"
-                                    value="circle" onchange="setDrawingMode()" autocomplete="off">
+                                <input type="radio" class="btn-check" name="drawingMode" id="circleMode" value="circle"
+                                    onchange="setDrawingMode()" autocomplete="off">
                                 <label class="btn btn-outline-light btn-sm" for="circleMode" title="円形・楕円の枠線を描画 (C)">
                                     <i class="bi bi-circle"></i>
                                 </label>
 
                                 <input type="radio" class="btn-check" name="drawingMode" id="filledCircleMode"
                                     value="filledCircle" onchange="setDrawingMode()" autocomplete="off">
-                                <label class="btn btn-outline-light btn-sm" for="filledCircleMode" title="円形・楕円を塗りつぶして描画 (Shift+C)">
+                                <label class="btn btn-outline-light btn-sm" for="filledCircleMode"
+                                    title="円形・楕円を塗りつぶして描画 (Shift+C)">
                                     <i class="bi bi-circle-fill"></i>
                                 </label>
                             </div>
@@ -2286,55 +2288,55 @@
             <div className="d-flex flex-wrap gap-1">
                 {/* スライド操作 */}
                 <div className="btn-group" role="group" aria-label="スライド操作">
-                    <button className="btn btn-outline-primary btn-sm" onClick={SlideUp} title="上にスライド">
-                        <i className="bi bi-arrow-up"></i>
+                    <button className="btn btn-dark btn-sm" onClick={SlideUp} title="上にスライド">
+                        <i className="bi bi-arrow-up text-primary"></i>
                     </button>
-                    <button className="btn btn-outline-primary btn-sm" onClick={SlideDown} title="下にスライド">
-                        <i className="bi bi-arrow-down"></i>
+                    <button className="btn btn-dark btn-sm" onClick={SlideDown} title="下にスライド">
+                        <i className="bi bi-arrow-down text-primary"></i>
                     </button>
-                    <button className="btn btn-outline-primary btn-sm" onClick={SlideLeft} title="左にスライド">
-                        <i className="bi bi-arrow-left"></i>
+                    <button className="btn btn-dark btn-sm" onClick={SlideLeft} title="左にスライド">
+                        <i className="bi bi-arrow-left text-primary"></i>
                     </button>
-                    <button className="btn btn-outline-primary btn-sm" onClick={SlideRight} title="右にスライド">
-                        <i className="bi bi-arrow-right"></i>
+                    <button className="btn btn-dark btn-sm" onClick={SlideRight} title="右にスライド">
+                        <i className="bi bi-arrow-right text-primary"></i>
                     </button>
                 </div>
-                
+
                 {/* 回転操作 */}
                 <div className="btn-group" role="group" aria-label="回転操作">
-                    <button className="btn btn-outline-success btn-sm" onClick={RotateLeft} title="左回転">
-                        <i className="bi bi-arrow-counterclockwise"></i>
+                    <button className="btn btn-dark btn-sm" onClick={RotateLeft} title="左回転">
+                        <i className="bi bi-arrow-counterclockwise text-success"></i>
                     </button>
-                    <button className="btn btn-outline-success btn-sm" onClick={RotateRight} title="右回転">
-                        <i className="bi bi-arrow-clockwise"></i>
+                    <button className="btn btn-dark btn-sm" onClick={RotateRight} title="右回転">
+                        <i className="bi bi-arrow-clockwise text-success"></i>
                     </button>
                 </div>
-                
+
                 {/* 反転操作 */}
                 <div className="btn-group" role="group" aria-label="反転操作">
-                    <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridLeftRight} title="左右反転">
-                        <i className="bi bi-arrow-left-right"></i>
+                    <button className="btn btn-dark btn-sm" onClick={ReverseGridLeftRight} title="左右反転">
+                        <i className="bi bi-arrow-left-right text-warning"></i>
                     </button>
-                    <button className="btn btn-outline-warning btn-sm" onClick={ReverseGridUpDown} title="上下反転">
-                        <i className="bi bi-arrow-down-up"></i>
+                    <button className="btn btn-dark btn-sm" onClick={ReverseGridUpDown} title="上下反転">
+                        <i className="bi bi-arrow-down-up text-warning"></i>
                     </button>
                 </div>
-                
+
                 {/* 外周コーティング */}
-                <button className="btn btn-outline-info btn-sm" onClick={CoatingOutsideVault} title="外周に%を配置">
-                    <i className="bi bi-percent"></i>
+                <button className="btn btn-dark btn-sm" onClick={CoatingOutsideVault} title="外周に%を配置">
+                    <i className="bi bi-percent text-info"></i>
                 </button>
-                
+
                 {/* ミラー操作 */}
                 <div className="btn-group" role="group" aria-label="ミラー操作">
-                    <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridLeftToRight} title="左から右へミラー">
-                        <i className="bi bi-chevron-double-right"></i>
+                    <button className="btn btn-dark btn-sm" onClick={MirrorGridLeftToRight} title="左から右へミラー">
+                        <i className="bi bi-chevron-double-right text-light"></i>
                     </button>
-                    <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridTopToBottom} title="上から下へミラー">
-                        <i className="bi bi-chevron-double-down"></i>
+                    <button className="btn btn-dark btn-sm" onClick={MirrorGridTopToBottom} title="上から下へミラー">
+                        <i className="bi bi-chevron-double-down text-light"></i>
                     </button>
-                    <button className="btn btn-outline-secondary btn-sm" onClick={MirrorGridDiagonal} title="対角線ミラー">
-                        <i className="bi bi-slash-lg"></i>
+                    <button className="btn btn-dark btn-sm" onClick={MirrorGridDiagonal} title="対角線ミラー">
+                        <i className="bi bi-slash-lg text-light"></i>
                     </button>
                 </div>
             </div>
