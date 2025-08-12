@@ -491,7 +491,13 @@
         const MAX_UNDO_STEPS = 50; // 最大アンドゥ回数
 
         function update_texts() {
+            // console.log('update_texts() が呼ばれました'); // デバッグ用
             let texts = document.getElementById('v_info');
+            if (!texts) {
+                console.error('v_info要素が見つかりません');
+                return;
+            }
+            
             texts.value = `N:${mapID}:${mapName}\r\n`;
             texts.value += `X:${mapType}:8:${mapHeight}:${mapWidth}\r\n`;
 
@@ -515,6 +521,7 @@
                 }
                 texts.value += '\r\n';
             }
+            // console.log('テキストデータ更新完了:', texts.value.length, 'characters'); // デバッグ用
         }
 
         // 現在の状態を保存する関数
@@ -1340,11 +1347,11 @@
             }
         }
 
-        let mapWidth = document.getElementById('vault-width').value;
-        let mapHeight = document.getElementById('vault-height').value;
-        let mapName = document.getElementById('vault-name').value;
-        let mapID = document.getElementById('vault-id').value;
-        let mapType = document.getElementById('vault-type').value;
+        let mapWidth = parseInt(document.getElementById('vault-width').value) || 14;
+        let mapHeight = parseInt(document.getElementById('vault-height').value) || 14;
+        let mapName = document.getElementById('vault-name').value || 'テストマップ';
+        let mapID = parseInt(document.getElementById('vault-id').value) || 0;
+        let mapType = parseInt(document.getElementById('vault-type').value) || 18;
 
         // 効率的なグリッド更新を判定する関数
         function smartGridUpdate() {
@@ -1364,14 +1371,29 @@
             saveState();
             mapWidth = parseInt(this.value);
             drawGrid(); // サイズ変更なので完全再描画が必要
-            scheduleTextUpdate();
+            update_texts(); // 即座にテキスト更新
         }
 
         document.getElementById('vault-height').onchange = function () {
             saveState();
             mapHeight = parseInt(this.value);
             drawGrid(); // サイズ変更なので完全再描画が必要
-            scheduleTextUpdate();
+            update_texts(); // 即座にテキスト更新
+        }
+
+        document.getElementById('vault-id').onchange = function () {
+            mapID = this.value;
+            update_texts(); // 即座にテキスト更新
+        }
+
+        document.getElementById('vault-type').onchange = function () {
+            mapType = this.value;
+            update_texts(); // 即座にテキスト更新
+        }
+
+        document.getElementById('vault-name').onchange = function () {
+            mapName = this.value;
+            update_texts(); // 即座にテキスト更新
         }
 
         document.getElementById('vault-id').onchange = function () {
@@ -1499,7 +1521,6 @@
                                     if (now - lastUpdateTime > 16) { // 約60FPS制限
                                         updateSingleCell(x, y, currentTerrain);
                                         scheduleLayerDraw();
-                                        scheduleTextUpdate();
                                         lastUpdateTime = now;
                                     }
                                 }
@@ -1566,6 +1587,10 @@
         let pendingDrawUpdate = false;
         let batchUpdateTimer = null;
 
+        // テキスト更新のスケジューリング用変数
+        let pendingTextUpdate = false;
+        let textUpdateTimer = null;
+
         // 個別セルを更新する最適化された関数
         function updateSingleCell(x, y, terrain) {
             if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return;
@@ -1579,6 +1604,27 @@
             if (konva_text && konva_text[x] && konva_text[x][y]) {
                 konva_text[x][y].text(terrain);
             }
+            
+            // 個別セル更新の場合は即座にテキスト更新をスケジュール
+            scheduleTextUpdate();
+        }
+
+        // テキスト更新をスケジュールする関数
+        function scheduleTextUpdate() {
+            // console.log('scheduleTextUpdate() が呼ばれました'); // デバッグ用
+            if (pendingTextUpdate) {
+                // console.log('テキスト更新は既にスケジュール済み');
+                return;
+            }
+            
+            pendingTextUpdate = true;
+            if (textUpdateTimer) clearTimeout(textUpdateTimer);
+            
+            textUpdateTimer = setTimeout(() => {
+                // console.log('スケジュールされたテキスト更新を実行中');
+                update_texts();
+                pendingTextUpdate = false;
+            }, 16); // テキスト更新を高頻度に変更（約60FPS）
         }
 
         // バッチ更新を管理する関数
@@ -1598,34 +1644,6 @@
 
         // レクト要素の配列
         let konva_rects = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
-
-            // 矩形・円形描画用のステージイベントハンドラー
-            globalStage.on('mouseup', function () {
-                if ((isRectangleMode || isFilledRectangleMode) && isDrawingRectangle) {
-                    isDrawingRectangle = false;
-                    drawRectangle();
-                    clearPreview();
-                } else if ((isCircleMode || isFilledCircleMode) && isDrawingCircle) {
-                    isDrawingCircle = false;
-                    drawCircle();
-                    clearPreview();
-                }
-            });
-        // テキスト更新のスケジューリング
-        let pendingTextUpdate = false;
-        let textUpdateTimer = null;
-
-        function scheduleTextUpdate() {
-            if (pendingTextUpdate) return;
-            
-            pendingTextUpdate = true;
-            if (textUpdateTimer) clearTimeout(textUpdateTimer);
-            
-            textUpdateTimer = setTimeout(() => {
-                update_texts();
-                pendingTextUpdate = false;
-            }, 100); // テキスト更新は100ms間隔でバッチ処理
-        }
 
         // フラッドフィル機能の最適化
         function floodFill(startX, startY, newTerrain) {
@@ -1687,6 +1705,10 @@
         }
 
         window.onload = function () {
+            // console.log('ページロード完了 - マップ変数チェック:');
+            // console.log('mapWidth:', mapWidth, 'mapHeight:', mapHeight);
+            // console.log('mapName:', mapName, 'mapID:', mapID, 'mapType:', mapType);
+            
             loadTerrainDefinitions();
             drawGrid();
             update_texts();
