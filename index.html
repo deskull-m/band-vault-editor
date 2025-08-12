@@ -491,7 +491,13 @@
         const MAX_UNDO_STEPS = 50; // 最大アンドゥ回数
 
         function update_texts() {
+            // console.log('update_texts() が呼ばれました'); // デバッグ用
             let texts = document.getElementById('v_info');
+            if (!texts) {
+                console.error('v_info要素が見つかりません');
+                return;
+            }
+            
             texts.value = `N:${mapID}:${mapName}\r\n`;
             texts.value += `X:${mapType}:8:${mapHeight}:${mapWidth}\r\n`;
 
@@ -515,6 +521,7 @@
                 }
                 texts.value += '\r\n';
             }
+            // console.log('テキストデータ更新完了:', texts.value.length, 'characters'); // デバッグ用
         }
 
         // 現在の状態を保存する関数
@@ -642,53 +649,6 @@
             showToast('操作をやり直しました', 'success');
         }
 
-        // フラッドフィル（塗りつぶし）機能
-        function floodFill(startX, startY, newTerrain) {
-            const originalTerrain = grid[startX][startY];
-
-            // 同じ地形の場合は何もしない
-            if (originalTerrain === newTerrain) {
-                return false;
-            }
-
-            // 状態を保存
-            saveState();
-
-            // BFS（幅優先探索）を使用してフラッドフィル
-            const queue = [[startX, startY]];
-            const visited = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(false));
-
-            while (queue.length > 0) {
-                const [x, y] = queue.shift();
-
-                // 範囲外または既に訪問済みの場合はスキップ
-                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight || visited[x][y]) {
-                    continue;
-                }
-
-                // 異なる地形の場合はスキップ
-                if (grid[x][y] !== originalTerrain) {
-                    continue;
-                }
-
-                // 地形を変更し、訪問済みにマーク
-                grid[x][y] = newTerrain;
-                visited[x][y] = true;
-
-                // 隣接する4方向を探索キューに追加
-                queue.push([x + 1, y]);
-                queue.push([x - 1, y]);
-                queue.push([x, y + 1]);
-                queue.push([x, y - 1]);
-            }
-
-            // グリッドとテキストを更新
-            drawGrid();
-            update_texts();
-
-            return true;
-        }
-
         // フラッドフィルモードの状態管理
         let isFloodFillMode = false;
         let isRectangleMode = false;
@@ -806,7 +766,7 @@
             currentTerrain = this.value;
         }
 
-        // 矩形描画関数
+        // 矩形描画関数（最適化版）
         function drawRectangle() {
             if (rectangleStartX === -1 || rectangleStartY === -1) return;
 
@@ -820,12 +780,15 @@
             const minY = Math.min(rectangleStartY, rectangleEndY);
             const maxY = Math.max(rectangleStartY, rectangleEndY);
 
+            const changedCells = [];
+
             if (isFilledRectangleMode) {
                 // 塗りつぶし矩形
                 for (let x = minX; x <= maxX; x++) {
                     for (let y = minY; y <= maxY; y++) {
                         if (x < mapWidth && y < mapHeight) {
                             grid[x][y] = currentTerrain;
+                            changedCells.push([x, y]);
                         }
                     }
                 }
@@ -834,24 +797,46 @@
                 // 矩形の枠線のみ
                 for (let x = minX; x <= maxX; x++) {
                     if (x < mapWidth) {
-                        if (minY < mapHeight) grid[x][minY] = currentTerrain; // 上辺
-                        if (maxY < mapHeight) grid[x][maxY] = currentTerrain; // 下辺
+                        if (minY < mapHeight) {
+                            grid[x][minY] = currentTerrain;
+                            changedCells.push([x, minY]);
+                        }
+                        if (maxY < mapHeight) {
+                            grid[x][maxY] = currentTerrain;
+                            changedCells.push([x, maxY]);
+                        }
                     }
                 }
                 for (let y = minY; y <= maxY; y++) {
                     if (y < mapHeight) {
-                        if (minX < mapWidth) grid[minX][y] = currentTerrain; // 左辺
-                        if (maxX < mapWidth) grid[maxX][y] = currentTerrain; // 右辺
+                        if (minX < mapWidth) {
+                            grid[minX][y] = currentTerrain;
+                            changedCells.push([minX, y]);
+                        }
+                        if (maxX < mapWidth) {
+                            grid[maxX][y] = currentTerrain;
+                            changedCells.push([maxX, y]);
+                        }
                     }
                 }
                 showToast(`矩形の枠線を描画しました (${maxX - minX + 1}×${maxY - minY + 1})`, 'success');
             }
 
-            update_texts();
-            drawGrid();
+            // 変更されたセルをバッチ更新
+            changedCells.forEach(([x, y]) => {
+                if (konva_rects && konva_rects[x] && konva_rects[x][y]) {
+                    konva_rects[x][y].fill(currentTerrain === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
+                }
+                if (konva_text && konva_text[x] && konva_text[x][y]) {
+                    konva_text[x][y].text(currentTerrain);
+                }
+            });
+
+            scheduleLayerDraw();
+            scheduleTextUpdate();
         }
 
-        // 円形・楕円描画関数
+        // 円形・楕円描画関数（最適化版）
         function drawCircle() {
             if (circleStartX === -1 || circleStartY === -1) return;
 
@@ -865,30 +850,36 @@
             const radiusX = Math.abs(circleEndX - circleStartX);
             const radiusY = Math.abs(circleEndY - circleStartY);
 
+            let points = [];
+            let shapeType = '';
+
             if (isFilledCircleMode) {
                 // 塗りつぶし円形・楕円
-                const points = getFilledEllipsePoints(centerX, centerY, radiusX, radiusY);
-                points.forEach(([x, y]) => {
-                    if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
-                        grid[x][y] = currentTerrain;
-                    }
-                });
-                const shapeType = radiusX === radiusY ? '円形' : '楕円';
+                points = getFilledEllipsePoints(centerX, centerY, radiusX, radiusY);
+                shapeType = radiusX === radiusY ? '円形' : '楕円';
                 showToast(`塗りつぶし${shapeType}を描画しました (半径: ${radiusX}×${radiusY})`, 'success');
             } else {
                 // 円形・楕円の枠線のみ
-                const points = getEllipsePoints(centerX, centerY, radiusX, radiusY);
-                points.forEach(([x, y]) => {
-                    if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
-                        grid[x][y] = currentTerrain;
-                    }
-                });
-                const shapeType = radiusX === radiusY ? '円形' : '楕円';
+                points = getEllipsePoints(centerX, centerY, radiusX, radiusY);
+                shapeType = radiusX === radiusY ? '円形' : '楕円';
                 showToast(`${shapeType}の枠線を描画しました (半径: ${radiusX}×${radiusY})`, 'success');
             }
 
-            update_texts();
-            drawGrid();
+            // バッチ更新
+            points.forEach(([x, y]) => {
+                if (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
+                    grid[x][y] = currentTerrain;
+                    if (konva_rects && konva_rects[x] && konva_rects[x][y]) {
+                        konva_rects[x][y].fill(currentTerrain === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
+                    }
+                    if (konva_text && konva_text[x] && konva_text[x][y]) {
+                        konva_text[x][y].text(currentTerrain);
+                    }
+                }
+            });
+
+            scheduleLayerDraw();
+            scheduleTextUpdate();
         }
 
         // 楕円周上の点を取得する関数（修正ミッドポイント楕円アルゴリズム）
@@ -1299,33 +1290,110 @@
         // グリッドサイズとマップサイズ
         let gridSize = 24; // タイルサイズ
 
-        // タイルサイズの変更
+        // パフォーマンスモニター
+        let performanceStats = {
+            lastFrameTime: 0,
+            avgFrameTime: 0,
+            frameCount: 0
+        };
+
+        function updatePerformanceStats() {
+            const now = performance.now();
+            const frameTime = now - performanceStats.lastFrameTime;
+            
+            if (performanceStats.lastFrameTime > 0) {
+                performanceStats.avgFrameTime = 
+                    (performanceStats.avgFrameTime * performanceStats.frameCount + frameTime) / 
+                    (performanceStats.frameCount + 1);
+                performanceStats.frameCount++;
+                
+                // パフォーマンス警告（60FPS以下になった場合）
+                if (performanceStats.frameCount > 10 && performanceStats.avgFrameTime > 16.67) {
+                    console.warn(`パフォーマンス低下を検出: 平均フレーム時間 ${performanceStats.avgFrameTime.toFixed(2)}ms`);
+                }
+            }
+            
+            performanceStats.lastFrameTime = now;
+        }
+
+        // 大きなマップでのタイルサイズ自動調整
+        function getOptimalTileSize() {
+            const totalCells = mapWidth * mapHeight;
+            const currentTileSize = parseInt(document.getElementById('tile_size').value);
+            
+            // 10000セル以上で自動的に小さなタイルサイズを推奨
+            if (totalCells > 10000 && currentTileSize > 16) {
+                return 16;
+            } else if (totalCells > 5000 && currentTileSize > 20) {
+                return 20;
+            }
+            
+            return currentTileSize;
+        }
+
+        // タイルサイズの変更（最適化版）
         function updateTileSize() {
-            const newSize = document.getElementById('tile_size').value;
+            const newSize = parseInt(document.getElementById('tile_size').value);
             if (newSize > 0) {
                 gridSize = newSize;
+                
+                // 大きなマップの場合は警告を表示
+                const totalCells = mapWidth * mapHeight;
+                if (totalCells > 5000 && newSize > 20) {
+                    showToast('大きなマップでは小さなタイルサイズ（16-20px）の使用を推奨します', 'info');
+                }
+                
                 drawGrid();
             }
         }
 
-        let mapWidth = document.getElementById('vault-width').value;
-        let mapHeight = document.getElementById('vault-height').value;
-        let mapName = document.getElementById('vault-name').value;
-        let mapID = document.getElementById('vault-id').value;
-        let mapType = document.getElementById('vault-type').value;
+        let mapWidth = parseInt(document.getElementById('vault-width').value) || 14;
+        let mapHeight = parseInt(document.getElementById('vault-height').value) || 14;
+        let mapName = document.getElementById('vault-name').value || 'テストマップ';
+        let mapID = parseInt(document.getElementById('vault-id').value) || 0;
+        let mapType = parseInt(document.getElementById('vault-type').value) || 18;
+
+        // 効率的なグリッド更新を判定する関数
+        function smartGridUpdate() {
+            // マップサイズが変更された場合のみ完全再描画
+            const currentWidth = parseInt(document.getElementById('vault-width').value);
+            const currentHeight = parseInt(document.getElementById('vault-height').value);
+            
+            if (currentWidth !== mapWidth || currentHeight !== mapHeight) {
+                drawGrid();
+            } else {
+                // サイズが変わっていない場合は軽量更新のみ
+                scheduleLayerDraw();
+            }
+        }
 
         document.getElementById('vault-width').onchange = function () {
             saveState();
-            mapWidth = document.getElementById('vault-width').value;
-            drawGrid();
-            update_texts();
+            mapWidth = parseInt(this.value);
+            drawGrid(); // サイズ変更なので完全再描画が必要
+            update_texts(); // 即座にテキスト更新
         }
 
         document.getElementById('vault-height').onchange = function () {
             saveState();
-            mapHeight = document.getElementById('vault-height').value;
-            drawGrid();
-            update_texts();
+            mapHeight = parseInt(this.value);
+            drawGrid(); // サイズ変更なので完全再描画が必要
+            update_texts(); // 即座にテキスト更新
+        }
+
+        document.getElementById('vault-id').onchange = function () {
+            mapID = this.value;
+            update_texts(); // 即座にテキスト更新
+        }
+
+        document.getElementById('vault-type').onchange = function () {
+            mapType = this.value;
+            update_texts(); // 即座にテキスト更新
+        }
+
+        document.getElementById('vault-name').onchange = function () {
+            mapName = this.value;
+            update_texts(); // 即座にテキスト更新
         }
 
         document.getElementById('vault-id').onchange = function () {
@@ -1347,8 +1415,19 @@
         let grid = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(" "));
         let konva_text = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
 
-        // グリッドを描画する関数
-        function drawGrid() {
+        // メモリ効率的なグリッド描画（必要な部分のみ描画）
+        function drawGridOptimized() {
+            const startTime = performance.now();
+            updatePerformanceStats();
+            
+            // 大きなマップの場合は最適化されたタイルサイズを使用
+            const optimalSize = getOptimalTileSize();
+            if (optimalSize !== gridSize) {
+                gridSize = optimalSize;
+                document.getElementById('tile_size').value = optimalSize;
+                showToast(`大きなマップのためタイルサイズを${optimalSize}pxに自動調整しました`, 'info');
+            }
+            
             // 既存のステージをクリア
             const tilesContainer = document.getElementById('tiles');
             tilesContainer.innerHTML = '';
@@ -1360,8 +1439,22 @@
             });
 
             globalLayer = new Konva.Layer();
+            
+            // 配列の初期化を最適化
             konva_text = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
+            konva_rects = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
+            
             globalStage.add(globalLayer);
+
+            // 描画要素をバッチで作成
+            const shapes = [];
+            const totalCells = mapWidth * mapHeight;
+            
+            // 大きなマップの場合は進捗表示
+            if (totalCells > 5000) {
+                showToast(`大きなマップを描画中... (${mapWidth}×${mapHeight} = ${totalCells}セル)`, 'info');
+            }
+            
             for (let i = 0; i < mapWidth; i++) {
                 for (let j = 0; j < mapHeight; j++) {
                     const rect = new Konva.Rect({
@@ -1374,39 +1467,72 @@
                         strokeWidth: 1
                     });
 
-                    rect.on('mousedown', function () {
-                        if (isFloodFillMode) {
-                            // フラッドフィルモードの場合
-                            const filled = floodFill(i, j, currentTerrain);
-                            if (filled) {
-                                showToast(`地形 "${grid[i][j]}" を "${currentTerrain}" で塗りつぶしました`, 'success');
+                    // イベントハンドラーをクロージャで最適化
+                    (function(x, y) {
+                        rect.on('mousedown', function () {
+                            if (isFloodFillMode) {
+                                const filled = floodFill(x, y, currentTerrain);
+                                if (filled) {
+                                    showToast(`地形 "${grid[x][y]}" を "${currentTerrain}" で塗りつぶしました`, 'success');
+                                }
+                            } else if (isRectangleMode || isFilledRectangleMode) {
+                                if (!isDrawingRectangle) {
+                                    isDrawingRectangle = true;
+                                    rectangleStartX = x;
+                                    rectangleStartY = y;
+                                    rectangleEndX = x;
+                                    rectangleEndY = y;
+                                }
+                            } else if (isCircleMode || isFilledCircleMode) {
+                                if (!isDrawingCircle) {
+                                    isDrawingCircle = true;
+                                    circleStartX = x;
+                                    circleStartY = y;
+                                    circleEndX = x;
+                                    circleEndY = y;
+                                }
+                            } else {
+                                saveState();
+                                updateSingleCell(x, y, currentTerrain);
+                                scheduleLayerDraw();
+                                scheduleTextUpdate();
                             }
-                        } else if (isRectangleMode || isFilledRectangleMode) {
-                            // 矩形描画モードの場合
-                            if (!isDrawingRectangle) {
-                                isDrawingRectangle = true;
-                                rectangleStartX = i;
-                                rectangleStartY = j;
-                                rectangleEndX = i;
-                                rectangleEndY = j;
+                        });
+
+                        const gridUpdateHandler = function () {
+                            if (isRectangleMode || isFilledRectangleMode) {
+                                if (isDrawingRectangle) {
+                                    rectangleEndX = x;
+                                    rectangleEndY = y;
+                                    drawPreviewRectangle();
+                                }
+                            } else if (isCircleMode || isFilledCircleMode) {
+                                if (isDrawingCircle) {
+                                    circleEndX = x;
+                                    circleEndY = y;
+                                    drawPreviewCircle();
+                                }
+                            } else {
+                                clearPreview();
+
+                                if (mouseDown && !isFloodFillMode) {
+                                    // スロットリング: 頻繁すぎる更新を防ぐ
+                                    const now = performance.now();
+                                    if (now - lastUpdateTime > 16) { // 約60FPS制限
+                                        updateSingleCell(x, y, currentTerrain);
+                                        scheduleLayerDraw();
+                                        lastUpdateTime = now;
+                                    }
+                                }
                             }
-                        } else if (isCircleMode || isFilledCircleMode) {
-                            // 円形描画モードの場合
-                            if (!isDrawingCircle) {
-                                isDrawingCircle = true;
-                                circleStartX = i;
-                                circleStartY = j;
-                                circleEndX = i;
-                                circleEndY = j;
-                            }
+                        };
+
+                        if (touchmode) {
+                            rect.on('touchmove', gridUpdateHandler);
                         } else {
-                            // 通常モードの場合
-                            saveState();
-                            grid[i][j] = currentTerrain;
-                            update_texts();
-                            drawGrid();
+                            rect.on('mousemove', gridUpdateHandler);
                         }
-                    });
+                    })(i, j);
 
                     konva_text[i][j] = new Konva.Text({
                         x: i * gridSize + 1,
@@ -1418,47 +1544,23 @@
                         listening: false,
                     });
 
-                    gridUpdate = function () {
-                        if (isRectangleMode || isFilledRectangleMode) {
-                            // 矩形描画モードの場合
-                            if (isDrawingRectangle) {
-                                rectangleEndX = i;
-                                rectangleEndY = j;
-                                drawPreviewRectangle();
-                            }
-                        } else if (isCircleMode || isFilledCircleMode) {
-                            // 円形描画モードの場合
-                            if (isDrawingCircle) {
-                                circleEndX = i;
-                                circleEndY = j;
-                                drawPreviewCircle();
-                            }
-                        } else {
-                            // 描画モード以外の場合はプレビューをクリア
-                            clearPreview();
-
-                            if (mouseDown && !isFloodFillMode) {
-                                grid[i][j] = currentTerrain;
-                                this.fill(grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
-                                konva_text[i][j].text(grid[i][j]);
-                                globalLayer.draw();
-                                update_texts();
-                            }
-                        }
-                    };
-
-                    if (touchmode) {
-                        rect.on('touchmove', gridUpdate);
-                    }
-                    else {
-                        rect.on('mousemove', gridUpdate);
-                    }
-
-                    globalLayer.add(rect);
-                    globalLayer.add(konva_text[i][j]);
+                    konva_rects[i][j] = rect;
+                    shapes.push(rect, konva_text[i][j]);
                 }
             }
-            globalLayer.draw();
+
+            // バッチでシェイプを追加（パフォーマンス向上）
+            shapes.forEach(shape => globalLayer.add(shape));
+            
+            // 一度だけ描画
+            globalLayer.batchDraw();
+
+            const endTime = performance.now();
+            console.log(`グリッド描画時間: ${endTime - startTime}ms (${totalCells}セル)`);
+            
+            if (totalCells > 5000) {
+                showToast(`マップ描画完了 (${(endTime - startTime).toFixed(0)}ms)`, 'success');
+            }
 
             // 矩形・円形描画用のステージイベントハンドラー
             globalStage.on('mouseup', function () {
@@ -1473,7 +1575,140 @@
                 }
             });
         }
+
+        // drawGrid関数を最適化版にリダイレクト
+        function drawGrid() {
+            drawGridOptimized();
+        }
+
+        // パフォーマンス管理用の変数
+        let isDrawing = false;
+        let lastUpdateTime = 0;
+        let pendingDrawUpdate = false;
+        let batchUpdateTimer = null;
+
+        // テキスト更新のスケジューリング用変数
+        let pendingTextUpdate = false;
+        let textUpdateTimer = null;
+
+        // 個別セルを更新する最適化された関数
+        function updateSingleCell(x, y, terrain) {
+            if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return;
+            
+            grid[x][y] = terrain;
+            
+            // Konvaオブジェクトが存在する場合のみ更新
+            if (konva_rects && konva_rects[x] && konva_rects[x][y]) {
+                konva_rects[x][y].fill(terrain === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
+            }
+            if (konva_text && konva_text[x] && konva_text[x][y]) {
+                konva_text[x][y].text(terrain);
+            }
+            
+            // 個別セル更新の場合は即座にテキスト更新をスケジュール
+            scheduleTextUpdate();
+        }
+
+        // テキスト更新をスケジュールする関数
+        function scheduleTextUpdate() {
+            // console.log('scheduleTextUpdate() が呼ばれました'); // デバッグ用
+            if (pendingTextUpdate) {
+                // console.log('テキスト更新は既にスケジュール済み');
+                return;
+            }
+            
+            pendingTextUpdate = true;
+            if (textUpdateTimer) clearTimeout(textUpdateTimer);
+            
+            textUpdateTimer = setTimeout(() => {
+                // console.log('スケジュールされたテキスト更新を実行中');
+                update_texts();
+                pendingTextUpdate = false;
+            }, 16); // テキスト更新を高頻度に変更（約60FPS）
+        }
+
+        // バッチ更新を管理する関数
+        function scheduleLayerDraw() {
+            if (pendingDrawUpdate) return;
+            
+            pendingDrawUpdate = true;
+            if (batchUpdateTimer) clearTimeout(batchUpdateTimer);
+            
+            batchUpdateTimer = setTimeout(() => {
+                if (globalLayer) {
+                    globalLayer.batchDraw();
+                }
+                pendingDrawUpdate = false;
+            }, 16); // 約60FPS制限
+        }
+
+        // レクト要素の配列
+        let konva_rects = Array.from({ length: MapMaxSize }, () => Array(MapMaxSize).fill(null));
+
+        // フラッドフィル機能の最適化
+        function floodFill(startX, startY, newTerrain) {
+            const originalTerrain = grid[startX][startY];
+
+            // 同じ地形の場合は何もしない
+            if (originalTerrain === newTerrain) {
+                return false;
+            }
+
+            // 状態を保存
+            saveState();
+
+            // BFS（幅優先探索）を使用してフラッドフィル - バッチ更新で最適化
+            const queue = [[startX, startY]];
+            const visited = Array.from({ length: mapWidth }, () => Array(mapHeight).fill(false));
+            const changedCells = [];
+
+            while (queue.length > 0) {
+                const [x, y] = queue.shift();
+
+                // 範囲外または既に訪問済みの場合はスキップ
+                if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight || visited[x][y]) {
+                    continue;
+                }
+
+                // 異なる地形の場合はスキップ
+                if (grid[x][y] !== originalTerrain) {
+                    continue;
+                }
+
+                // 地形を変更し、訪問済みにマーク
+                grid[x][y] = newTerrain;
+                visited[x][y] = true;
+                changedCells.push([x, y]);
+
+                // 隣接する4方向を探索キューに追加
+                queue.push([x + 1, y]);
+                queue.push([x - 1, y]);
+                queue.push([x, y + 1]);
+                queue.push([x, y - 1]);
+            }
+
+            // 変更されたセルをバッチ更新
+            changedCells.forEach(([x, y]) => {
+                if (konva_rects && konva_rects[x] && konva_rects[x][y]) {
+                    konva_rects[x][y].fill(newTerrain === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR);
+                }
+                if (konva_text && konva_text[x] && konva_text[x][y]) {
+                    konva_text[x][y].text(newTerrain);
+                }
+            });
+
+            // 一度だけ描画更新
+            scheduleLayerDraw();
+            scheduleTextUpdate();
+
+            return true;
+        }
+
         window.onload = function () {
+            // console.log('ページロード完了 - マップ変数チェック:');
+            // console.log('mapWidth:', mapWidth, 'mapHeight:', mapHeight);
+            // console.log('mapName:', mapName, 'mapID:', mapID, 'mapType:', mapType);
+            
             loadTerrainDefinitions();
             drawGrid();
             update_texts();
