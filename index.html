@@ -1425,7 +1425,8 @@
             if (optimalSize !== gridSize) {
                 gridSize = optimalSize;
                 document.getElementById('tile_size').value = optimalSize;
-                showToast(`大きなマップのためタイルサイズを${optimalSize}pxに自動調整しました`, 'info');
+                const borderStatus = optimalSize <= 14 ? '（枠線非表示）' : '';
+                showToast(`大きなマップのためタイルサイズを${optimalSize}pxに自動調整しました${borderStatus}`, 'info');
             }
             
             // 既存のステージをクリア
@@ -1463,8 +1464,8 @@
                         width: gridSize,
                         height: gridSize,
                         fill: grid[i][j] === " " ? VOID_TILE_COLOR : NORMAL_TILE_COLOR,
-                        stroke: 'white',
-                        strokeWidth: 1
+                        stroke: gridSize <= 14 ? 'transparent' : 'white',
+                        strokeWidth: gridSize <= 14 ? 0 : 1
                     });
 
                     // イベントハンドラーをクロージャで最適化
@@ -1540,7 +1541,11 @@
                         text: grid[i][j],
                         fontSize: gridSize,
                         fontFamily: 'Arial',
-                        stroke: 'white',
+                        fontStyle: 'normal',
+                        fontVariant: 'normal',
+                        fill: 'white',
+                        stroke: 'black',
+                        strokeWidth: 0.5,
                         listening: false,
                     });
 
