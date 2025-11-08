@@ -620,7 +620,6 @@
             const previousState = undoStack.pop();
             restoreState(previousState);
 
-            showToast('操作を元に戻しました', 'success');
         }
 
         // リドゥ機能
@@ -645,8 +644,6 @@
             // 次の状態を復元
             const nextState = redoStack.pop();
             restoreState(nextState);
-
-            showToast('操作をやり直しました', 'success');
         }
 
         // フラッドフィルモードの状態管理
@@ -709,23 +706,17 @@
             isCircleMode = false;
             isFilledCircleMode = false;
 
-            if (normalMode.checked) {
-                showToast('通常描画モードに切り替えました', 'info');
-            } else if (floodFillMode.checked) {
+            // 選択されたモードを有効にする
+            if (floodFillMode.checked) {
                 isFloodFillMode = true;
-                showToast('塗りつぶしモードに切り替えました: 地形をクリックして塗りつぶしてください', 'info');
             } else if (rectangleMode.checked) {
                 isRectangleMode = true;
-                showToast('矩形描画モードに切り替えました: ドラッグして矩形の枠線を描画してください', 'info');
             } else if (filledRectangleMode.checked) {
                 isFilledRectangleMode = true;
-                showToast('塗りつぶし矩形モードに切り替えました: ドラッグして矩形を塗りつぶしてください', 'info');
             } else if (circleMode.checked) {
                 isCircleMode = true;
-                showToast('円形・楕円描画モードに切り替えました: ドラッグして円形・楕円の枠線を描画してください', 'info');
             } else if (filledCircleMode.checked) {
                 isFilledCircleMode = true;
-                showToast('塗りつぶし円形・楕円モードに切り替えました: ドラッグして円形・楕円を塗りつぶしてください', 'info');
             }
         }
 
@@ -792,7 +783,6 @@
                         }
                     }
                 }
-                showToast(`塗りつぶし矩形を描画しました (${maxX - minX + 1}×${maxY - minY + 1})`, 'success');
             } else {
                 // 矩形の枠線のみ
                 for (let x = minX; x <= maxX; x++) {
@@ -819,7 +809,6 @@
                         }
                     }
                 }
-                showToast(`矩形の枠線を描画しました (${maxX - minX + 1}×${maxY - minY + 1})`, 'success');
             }
 
             // 変更されたセルをバッチ更新
@@ -857,12 +846,10 @@
                 // 塗りつぶし円形・楕円
                 points = getFilledEllipsePoints(centerX, centerY, radiusX, radiusY);
                 shapeType = radiusX === radiusY ? '円形' : '楕円';
-                showToast(`塗りつぶし${shapeType}を描画しました (半径: ${radiusX}×${radiusY})`, 'success');
             } else {
                 // 円形・楕円の枠線のみ
                 points = getEllipsePoints(centerX, centerY, radiusX, radiusY);
                 shapeType = radiusX === radiusY ? '円形' : '楕円';
-                showToast(`${shapeType}の枠線を描画しました (半径: ${radiusX}×${radiusY})`, 'success');
             }
 
             // バッチ更新
@@ -1345,9 +1332,6 @@
                 
                 // 大きなマップの場合は警告を表示
                 const totalCells = mapWidth * mapHeight;
-                if (totalCells > 5000 && newSize > 20) {
-                    showToast('大きなマップでは小さなタイルサイズ（16-20px）の使用を推奨します', 'info');
-                }
                 
                 drawGrid();
             }
@@ -1548,10 +1532,6 @@
             const endTime = performance.now();
             console.log(`グリッド描画時間: ${endTime - startTime}ms (${totalCells}セル)`);
             
-            if (totalCells > 5000) {
-                showToast(`マップ描画完了 (${(endTime - startTime).toFixed(0)}ms)`, 'success');
-            }
-
             // 矩形・円形描画用のステージイベントハンドラー
             globalStage.on('mouseup', function () {
                 if ((isRectangleMode || isFilledRectangleMode) && isDrawingRectangle) {
@@ -1664,9 +1644,6 @@
             rect.on('mousedown', function () {
                 if (isFloodFillMode) {
                     const filled = floodFill(x, y, currentTerrain);
-                    if (filled) {
-                        showToast(`地形 "${grid[x][y]}" を "${currentTerrain}" で塗りつぶしました`, 'success');
-                    }
                 } else if (isRectangleMode || isFilledRectangleMode) {
                     if (!isDrawingRectangle) {
                         isDrawingRectangle = true;
